@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    runs-on: [ self-hosted, app, main ]
+    runs-on: [ self-hosted, admin, stage ]
 
     strategy:
       matrix:
