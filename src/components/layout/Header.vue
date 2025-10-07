@@ -864,7 +864,7 @@
     import { ref, onMounted, computed, reactive, watch } from 'vue';
     import { useI18n } from 'vue-i18n';
 
-    import appSetting from '@/app-setting';
+    import { toggleLanguage } from '@/config';
 
     import { useRoute } from 'vue-router';
     import { useAppStore } from '@/stores/index';
@@ -904,7 +904,7 @@
     const i18n = reactive(useI18n());
     const changeLanguage = (item: any) => {
         i18n.locale = item.code;
-        appSetting.toggleLanguage(item);
+        toggleLanguage(item);
     };
     const currentFlag = computed(() => {
         return `/assets/images/flags/${i18n.locale.toUpperCase()}.svg`;

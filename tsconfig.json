@@ -17,10 +17,9 @@
             "@/*": ["src/*"]
         },
         "noImplicitAny": false,
-        "allowJs": true,
-        "types": ["@intlify/unplugin-vue-i18n/messages"]
+        "allowJs": true
     },
-    "include": ["src/**/*.js", "src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+    "include": ["src/**/*.js", "src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "packages/**/*.js", "packages/**/*.ts", "packages/**/*.d.ts", "packages/**/*.tsx", "packages/**/*.vue"],
     "references": [
         {
             "path": "./tsconfig.node.json"

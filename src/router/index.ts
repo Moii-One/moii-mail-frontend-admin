@@ -1,6 +1,14 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useAppStore } from '@/stores/index';
-import appSetting from '@/app-setting';
+import { changeAnimation } from '@/config';
+import { authRoutes } from '../../packages/moii-auth/src/router';
+import { exampleRoutes } from '../../packages/moii-example/src/router';
+import settingsRoutes from '../../packages/moii-settings/src/router';
+import localizationsRoutes from '../../packages/moii-localizations/src/router';
+import { requiresAuth, isAuthenticated, getLoginRedirect } from '../../packages/moii-auth/src/composables/useAuth';
+import { requiresAuth as exampleRequiresAuth } from '../../packages/moii-example/src/composables/useAuth';
+import { requiresAuth as settingsRequiresAuth } from '../../packages/moii-settings/src/composables/useAuth';
+import { requiresAuth as localizationsRequiresAuth } from '../../packages/moii-localizations/src/composables/useAuth';
 
 import HomeView from '../views/index.vue';
 
@@ -502,54 +510,14 @@ const routes: RouteRecordRaw[] = [
     },
 
     // authentication
-    {
-        path: '/auth/boxed-signin',
-        name: 'boxed-signin',
-        component: () => import(/* webpackChunkName: "auth-boxed-signin" */ '../views/auth/boxed-signin.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/boxed-signup',
-        name: 'boxed-signup',
-        component: () => import(/* webpackChunkName: "auth-boxed-signup" */ '../views/auth/boxed-signup.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/boxed-lockscreen',
-        name: 'boxed-lockscreen',
-        component: () => import(/* webpackChunkName: "auth-boxed-lockscreen" */ '../views/auth/boxed-lockscreen.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/boxed-password-reset',
-        name: 'boxed-password-reset',
-        component: () => import(/* webpackChunkName: "auth-boxed-password-reset" */ '../views/auth/boxed-password-reset.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/cover-login',
-        name: 'cover-login',
-        component: () => import(/* webpackChunkName: "auth-cover-login" */ '../views/auth/cover-login.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/cover-register',
-        name: 'cover-register',
-        component: () => import(/* webpackChunkName: "auth-cover-register" */ '../views/auth/cover-register.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/cover-lockscreen',
-        name: 'cover-lockscreen',
-        component: () => import(/* webpackChunkName: "auth-cover-lockscreen" */ '../views/auth/cover-lockscreen.vue'),
-        meta: { layout: 'auth' },
-    },
-    {
-        path: '/auth/cover-password-reset',
-        name: 'cover-password-reset',
-        component: () => import(/* webpackChunkName: "auth-cover-password-reset" */ '../views/auth/cover-password-reset.vue'),
-        meta: { layout: 'auth' },
-    },
+    ...authRoutes,
+    ...exampleRoutes,
+    
+    // localizations (requires authentication)
+    ...localizationsRoutes,
+    
+    // settings (requires authentication)
+    ...settingsRoutes,
 ];
 
 const router = createRouter({
@@ -568,14 +536,27 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const store = useAppStore();
 
+    // Handle layout changes
     if (to?.meta?.layout == 'auth') {
         store.setMainLayout('auth');
     } else {
         store.setMainLayout('app');
     }
-    next(true);
+
+    // Check if route requires authentication
+    if (requiresAuth(to) || exampleRequiresAuth(to) || localizationsRequiresAuth(to) || settingsRequiresAuth(to)) {
+        if (!isAuthenticated()) {
+            // User not authenticated, redirect to login
+            const loginPath = getLoginRedirect(to);
+            next(loginPath);
+            return;
+        }
+    }
+
+    // User is authenticated or route doesn't require auth
+    next();
 });
 router.afterEach((to, from, next) => {
-    appSetting.changeAnimation();
+    changeAnimation();
 });
 export default router;

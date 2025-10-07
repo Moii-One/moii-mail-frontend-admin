@@ -104,12 +104,6 @@
                                     </span>
                                 </div>
                             </div>
-                            <div>
-                                <label class="flex cursor-pointer items-center">
-                                    <input type="checkbox" class="form-checkbox bg-white dark:bg-black" />
-                                    <span class="text-white-dark">Subscribe to weekly newsletter</span>
-                                </label>
-                            </div>
                             <button type="submit" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
                                 Sign Up
                             </button>
@@ -175,10 +169,10 @@
 <script lang="ts" setup>
     import { computed, reactive } from 'vue';
     import { useI18n } from 'vue-i18n';
-    import appSetting from '@/app-setting';
+    import { toggleLanguage } from '@/config';
     import { useAppStore } from '@/stores/index';
-    import { useRouter } from 'vue-router';
     import { useMeta } from '@/composables/use-meta';
+    import { useRouter } from 'vue-router';
 
     import IconCaretDown from '@/components/icon/icon-caret-down.vue';
     import IconUser from '@/components/icon/icon-user.vue';
@@ -196,7 +190,7 @@
     const i18n = reactive(useI18n());
     const changeLanguage = (item: any) => {
         i18n.locale = item.code;
-        appSetting.toggleLanguage(item);
+        toggleLanguage(item);
     };
     const currentFlag = computed(() => {
         return `/assets/images/flags/${i18n.locale.toUpperCase()}.svg`;

@@ -1,0 +1,5 @@
+{
+    "api_base_url": "http://localhost:8000/api/localizations",
+    "languages_url": "http://localhost:8000/api/localizations/languages",
+    "translations_url": "http://localhost:8000/api/localizations/translations"
+}

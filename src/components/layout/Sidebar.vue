@@ -673,6 +673,47 @@
 
                         <h2 class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                             <icon-minus class="w-4 h-5 flex-none hidden" />
+                            <span>SYSTEM</span>
+                        </h2>
+
+                        <li class="menu nav-item">
+                            <button
+                                type="button"
+                                class="nav-link group w-full"
+                                :class="{ active: activeDropdown === 'localizations' }"
+                                @click="activeDropdown === 'localizations' ? (activeDropdown = null) : (activeDropdown = 'localizations')"
+                            >
+                                <div class="flex items-center">
+                                    <icon-menu-documentation class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Localizations</span>
+                                </div>
+                                <div :class="{ 'rtl:rotate-90 -rotate-90': activeDropdown !== 'localizations' }">
+                                    <icon-caret-down />
+                                </div>
+                            </button>
+                            <vue-collapsible :isOpen="activeDropdown === 'localizations'">
+                                <ul class="sub-menu text-gray-500">
+                                    <li>
+                                        <router-link to="/localizations/languages" @click="toggleMobileMenu">Languages</router-link>
+                                    </li>
+                                    <li>
+                                        <router-link to="/localizations/translations" @click="toggleMobileMenu">Translations</router-link>
+                                    </li>
+                                </ul>
+                            </vue-collapsible>
+                        </li>
+
+                        <li class="nav-item">
+                            <router-link to="/settings" class="group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <icon-menu-documentation class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Settings</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <h2 class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
+                            <icon-minus class="w-4 h-5 flex-none hidden" />
                             <span>{{ $t('supports') }}</span>
                         </h2>
 

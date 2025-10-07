@@ -1,0 +1,8 @@
+{
+    "name": "@moii/example",
+    "version": "0.0.1",
+    "description": "Example package demonstrating multi-package authentication integration",
+    "main": "src/index.ts",
+    "type": "module",
+    "private": true
+}

@@ -128,7 +128,7 @@
 <script lang="ts" setup>
     import { computed, reactive } from 'vue';
     import { useI18n } from 'vue-i18n';
-    import appSetting from '@/app-setting';
+    import { toggleLanguage } from '@/config';
     import { useAppStore } from '@/stores/index';
     import { useRouter } from 'vue-router';
     import { useMeta } from '@/composables/use-meta';
@@ -147,7 +147,7 @@
     const i18n = reactive(useI18n());
     const changeLanguage = (item: any) => {
         i18n.locale = item.code;
-        appSetting.toggleLanguage(item);
+        toggleLanguage(item);
     };
     const currentFlag = computed(() => {
         return `/assets/images/flags/${i18n.locale.toUpperCase()}.svg`;

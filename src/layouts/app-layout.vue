@@ -80,7 +80,7 @@
     import Header from '@/components/layout/Header.vue';
     import Footer from '@/components/layout/Footer.vue';
     import Setting from '@/components/ThemeCustomizer.vue';
-    import appSetting from '@/app-setting';
+    import { changeAnimation } from '@/config';
 
     import { useAppStore } from '@/stores/index';
     const store = useAppStore();
@@ -96,7 +96,7 @@
 
         const eleanimation: any = document.querySelector('.animation');
         eleanimation.addEventListener('animationend', function () {
-            appSetting.changeAnimation('remove');
+            changeAnimation('remove');
         });
         store.toggleMainLoader();
     });

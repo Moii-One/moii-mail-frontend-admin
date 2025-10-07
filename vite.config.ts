@@ -13,7 +13,12 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            '@main': path.resolve(__dirname, './'),
+            '@packages': path.resolve(__dirname, './packages'),
         },
+    },
+    build: {
+        target: 'esnext',
     },
     optimizeDeps: {
         include: ['quill'],

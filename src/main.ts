@@ -8,6 +8,10 @@ import { createPinia } from 'pinia';
 const pinia = createPinia();
 app.use(pinia);
 
+// load config and set default settings
+import { loadConfig } from '@/config';
+await loadConfig();
+
 import router from '@/router';
 app.use(router);
 
@@ -22,10 +26,6 @@ app.use(PerfectScrollbarPlugin);
 import { createHead } from '@vueuse/head';
 const head = createHead();
 app.use(head);
-
-// set default settings
-import appSetting from '@/app-setting';
-appSetting.init();
 
 //vue-i18n
 import i18n from '@/i18n';
