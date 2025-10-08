@@ -78,12 +78,13 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
-import IconX from '@/components/icon/icon-x.vue';
+import IconX from './icon/icon-x.vue';
 
 const props = defineProps<{
     show: boolean;
     translation?: { key: string; value: string } | null;
     languageCode: string;
+    initialData?: Partial<{ key: string; value: string }> | null;
 }>();
 
 const emit = defineEmits<{
@@ -103,11 +104,27 @@ watch(() => props.translation, (newTranslation) => {
             key: newTranslation.key,
             value: newTranslation.value,
         };
+    } else if (props.initialData) {
+        // Use initial data for add mode with pre-filled values
+        formData.value = {
+            key: props.initialData.key || '',
+            value: props.initialData.value || '',
+        };
     } else {
         // Reset form
         formData.value = {
             key: '',
             value: '',
+        };
+    }
+}, { immediate: true });
+
+// Watch for initialData changes to update form
+watch(() => props.initialData, (newInitialData) => {
+    if (newInitialData && !props.translation) {
+        formData.value = {
+            key: newInitialData.key || '',
+            value: newInitialData.value || '',
         };
     }
 }, { immediate: true });

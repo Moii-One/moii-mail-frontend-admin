@@ -9,7 +9,7 @@ A Vue 3 + TypeScript frontend package for managing system settings in the admin 
 - ✅ **Authentication**: Protected routes with auth store integration
 - ✅ **Search & Filter**: Search settings by key, group, or description
 - ✅ **Type Safety**: TypeScript support with proper type definitions
-- ✅ **Multiple Data Types**: Support for string, number, boolean, JSON, and array types
+- ✅ **Multiple Data Types**: Support for string, integer, float, boolean, JSON, and array types
 - ✅ **Visibility Control**: Public/Private settings
 - ✅ **Group Organization**: Organize settings by groups (e.g., general, email, payment)
 - ✅ **Beautiful UI**: Modern design with TailwindCSS and HeadlessUI
@@ -106,7 +106,7 @@ interface Setting {
     id?: number;
     key: string;
     value: any;
-    type: 'string' | 'number' | 'boolean' | 'json' | 'array';
+    type: 'string' | 'integer' | 'float' | 'boolean' | 'json' | 'array';
     group?: string | null;
     description?: string | null;
     is_public: boolean;

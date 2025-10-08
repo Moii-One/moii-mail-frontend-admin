@@ -703,11 +703,35 @@
                             </vue-collapsible>
                         </li>
 
-                        <li class="nav-item">
-                            <router-link to="/settings" class="group" @click="toggleMobileMenu">
+                        <li class="menu nav-item">
+                            <button type="button" class="nav-link group w-full" :class="{ active: activeDropdown === 'settings' }" @click="activeDropdown === 'settings' ? (activeDropdown = null) : (activeDropdown = 'settings')">
                                 <div class="flex items-center">
                                     <icon-menu-documentation class="group-hover:!text-primary shrink-0" />
                                     <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Settings</span>
+                                </div>
+
+                                <div class="rtl:rotate-180" :class="{ '!rotate-90': activeDropdown === 'settings' }">
+                                    <icon-caret-down />
+                                </div>
+                            </button>
+
+                            <vue-collapsible :opened="activeDropdown === 'settings' || null">
+                                <ul class="sub-menu text-gray-500">
+                                    <li>
+                                        <router-link to="/settings" @click="toggleMobileMenu">System Settings</router-link>
+                                    </li>
+                                    <li>
+                                        <router-link to="/settings/feature-flags" @click="toggleMobileMenu">Feature Flags</router-link>
+                                    </li>
+                                </ul>
+                            </vue-collapsible>
+                        </li>
+
+                        <li class="menu nav-item">
+                            <router-link to="/rate-limits" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconShield class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Rate Limits</span>
                                 </div>
                             </router-link>
                         </li>
@@ -766,6 +790,7 @@
     import IconMenuPages from '@/components/icon/menu/icon-menu-pages.vue';
     import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication.vue';
     import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation.vue';
+    import IconShield from '../../../packages/moii-limiter/src/components/icon/icon-shield.vue';
 
     const store = useAppStore();
     const activeDropdown: any = ref('');

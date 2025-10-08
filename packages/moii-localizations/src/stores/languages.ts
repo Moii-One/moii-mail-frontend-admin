@@ -5,6 +5,7 @@ import config from '../../config.json';
 
 export interface Language {
     id?: number;
+    uuid?: string;
     code: string;
     name: string;
     native_name?: string;
@@ -36,6 +37,10 @@ export const useLanguagesStore = defineStore('languages', () => {
         return languages.value.find(l => l.code === code);
     };
 
+    const getLanguageByUuid = (uuid: string) => {
+        return languages.value.find(l => l.uuid === uuid);
+    };
+
     // Helper to get auth headers
     const getAuthHeaders = () => {
         const headers: Record<string, string> = {
@@ -60,6 +65,12 @@ export const useLanguagesStore = defineStore('languages', () => {
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -85,6 +96,12 @@ export const useLanguagesStore = defineStore('languages', () => {
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
@@ -101,17 +118,23 @@ export const useLanguagesStore = defineStore('languages', () => {
         }
     }
 
-    async function updateLanguage(id: number, language: Partial<Language>) {
+    async function updateLanguage(uuid: string, language: Partial<Language>) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(language)
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
@@ -128,16 +151,22 @@ export const useLanguagesStore = defineStore('languages', () => {
         }
     }
 
-    async function deleteLanguage(id: number) {
+    async function deleteLanguage(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders(),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 if (response.status !== 204) {
                     try {
                         const errorData = await response.json();
@@ -158,16 +187,22 @@ export const useLanguagesStore = defineStore('languages', () => {
         }
     }
 
-    async function setDefault(id: number) {
+    async function setDefault(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}/default`, {
+            const response = await fetch(`${API_URL}/${uuid}/default`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
@@ -182,16 +217,22 @@ export const useLanguagesStore = defineStore('languages', () => {
         }
     }
 
-    async function toggleActive(id: number) {
+    async function toggleActive(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}/toggle-active`, {
+            const response = await fetch(`${API_URL}/${uuid}/toggle-active`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                }
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to perform this action.');
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
@@ -219,6 +260,7 @@ export const useLanguagesStore = defineStore('languages', () => {
         activeLanguages,
         defaultLanguage,
         getLanguageByCode,
+        getLanguageByUuid,
         // Actions
         fetchLanguages,
         createLanguage,

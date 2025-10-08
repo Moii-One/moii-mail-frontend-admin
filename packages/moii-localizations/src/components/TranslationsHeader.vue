@@ -1,15 +1,18 @@
 <template>
     <div class="space-y-4">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-            <h2 class="text-xl">{{ title }}</h2>
-            <div class="flex gap-3">
+        <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h5 class="font-semibold text-lg dark:text-white-light">{{ title }}</h5>
+                <p class="text-white-dark text-sm mt-1">Manage translation strings for different languages</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button 
                     type="button" 
                     class="btn btn-primary" 
                     @click="$emit('add')"
                     :disabled="!selectedLanguage"
                 >
-                    <icon-plus class="ltr:mr-2 rtl:ml-2" />
+                    <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Add Translation
                 </button>
                 <button 
@@ -26,8 +29,8 @@
 
         <!-- Filters Accordion -->
         <vue-collapsible :isOpen="showFilters">
-            <div class="panel p-4 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="panel p-4 space-y-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Search -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Search</label>
@@ -48,43 +51,43 @@
                     <!-- Language Filter -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Language</label>
-                        <select 
-                            class="form-select text-white-dark"
-                            :value="selectedLanguage"
-                            @change="$emit('update:selectedLanguage', ($event.target as HTMLSelectElement).value)"
-                        >
-                            <option value="">Select Language</option>
-                            <option v-for="lang in availableLanguages" :key="lang.code" :value="lang.code">
-                                {{ lang.name }} ({{ lang.code }})
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Clear Filters Button -->
-                    <div class="flex items-end">
-                        <button 
-                            type="button" 
-                            class="btn btn-outline-danger w-full"
-                            @click="clearFilters"
-                        >
-                            <icon-refresh class="ltr:mr-2 rtl:ml-2" />
-                            Clear Filters
-                        </button>
+                        <CustomSelect
+                            :model-value="selectedLanguage"
+                            :options="languageOptions"
+                            placeholder="Select Language"
+                            track-by="code"
+                            label="label"
+                            @update:model-value="handleLanguageChange"
+                        />
                     </div>
                 </div>
+
+                <!-- Clear Filters -->
+                <div class="flex items-center justify-end">
+                    <button 
+                        type="button" 
+                        class="btn btn-outline-warning"
+                        @click="clearFilters"
+                    >
+                        <icon-refresh class="ltr:mr-2 rtl:ml-2" />
+                        Clear Filters
+                    </button>
+                </div>
+
             </div>
         </vue-collapsible>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
-import IconPlus from '@/components/icon/icon-plus.vue';
-import IconSearch from '@/components/icon/icon-search.vue';
-import IconMenu from '@/components/icon/icon-menu.vue';
-import IconCaretDown from '@/components/icon/icon-caret-down.vue';
-import IconRefresh from '@/components/icon/icon-refresh.vue';
+import CustomSelect from './CustomSelect.vue';
+import IconPlus from './icon/icon-plus.vue';
+import IconSearch from './icon/icon-search.vue';
+import IconMenu from './icon/icon-menu.vue';
+import IconCaretDown from './icon/icon-caret-down.vue';
+import IconRefresh from './icon/icon-refresh.vue';
 
 interface Language {
     code: string;
@@ -106,8 +109,80 @@ const emit = defineEmits<{
 
 const showFilters = ref(false);
 
+// Computed language options for the select
+const languageOptions = computed(() => [
+    { code: '', label: 'Select Language' },
+    ...props.availableLanguages.map(lang => ({
+        code: lang.code,
+        label: `${lang.name} (${lang.code})`
+    }))
+]);
+
 const clearFilters = () => {
     emit('update:selectedLanguage', '');
     emit('update:searchQuery', '');
 };
+
+const handleLanguageChange = (selected: any) => {
+    if (!selected) {
+        emit('update:selectedLanguage', '');
+        return;
+    }
+    
+    // Extract the code from the selected object
+    if (typeof selected === 'object' && 'code' in selected) {
+        emit('update:selectedLanguage', selected.code);
+    } else {
+        emit('update:selectedLanguage', selected);
+    }
+};
 </script>
+
+<style scoped>
+/* Force multiselect dropdowns to be visible above everything */
+:deep(.multiselect__content-wrapper) {
+    position: absolute !important;
+    z-index: 99999 !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    width: 100% !important;
+    min-width: 200px !important;
+    top: 100% !important;
+    left: 0 !important;
+    display: none !important; /* Hide by default */
+}
+
+/* Force the multiselect container to allow overflow */
+:deep(.multiselect) {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+/* Show dropdown only when multiselect is active */
+:deep(.multiselect--active .multiselect__content-wrapper) {
+    display: block !important;
+    position: absolute !important;
+    visibility: visible !important;
+}
+
+/* Aggressive overflow control for all parent containers */
+:deep(.multiselect--active),
+:deep([data-height-collapsible] .multiselect--active),
+:deep([data-height-collapsible] .panel .multiselect--active),
+:deep(.space-y-4 [data-height-collapsible] .multiselect--active) {
+    overflow: visible !important;
+}
+
+/* Ensure the entire collapsible allows overflow when any multiselect is active */
+:deep([data-height-collapsible]:has(.multiselect--active)) {
+    overflow: visible !important;
+}
+
+:deep([data-height-collapsible] .panel:has(.multiselect--active)) {
+    overflow: visible !important;
+}
+</style>

@@ -33,7 +33,7 @@
                                 <icon-x />
                             </button>
                             <div class="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
-                                {{ setting?.id ? 'Edit Setting' : 'Add Setting' }}
+                                {{ setting?.uuid ? 'Edit Setting' : 'Add Setting' }}
                             </div>
                             <div class="p-5">
                                 <form @submit.prevent="$emit('save', formData)">
@@ -45,7 +45,7 @@
                                             placeholder="Enter key (e.g., app_name)" 
                                             class="form-input" 
                                             v-model="formData.key"
-                                            :disabled="!!setting?.id"
+                                            :disabled="!!setting?.uuid"
                                         />
                                     </div>
                                     <div class="mb-5">
@@ -60,22 +60,23 @@
                                     </div>
                                     <div class="mb-5">
                                         <label for="type">Type *</label>
-                                        <select id="type" class="form-select text-white-dark" v-model="formData.type">
-                                            <option value="string">String</option>
-                                            <option value="number">Number</option>
-                                            <option value="boolean">Boolean</option>
-                                            <option value="json">JSON</option>
-                                            <option value="array">Array</option>
-                                        </select>
+                                        <CustomSelect
+                                            :model-value="formData.type"
+                                            :options="typeOptions"
+                                            placeholder="Select Type"
+                                            :allow-empty="false"
+                                            @update:model-value="formData.type = $event"
+                                        />
                                     </div>
                                     <div class="mb-5">
-                                        <label for="group">Group</label>
+                                        <label for="group">Group *</label>
                                         <input 
                                             id="group" 
                                             type="text" 
                                             placeholder="Enter group (e.g., general, email)" 
                                             class="form-input" 
                                             v-model="formData.group"
+                                            required
                                         />
                                     </div>
                                     <div class="mb-5">
@@ -101,7 +102,7 @@
                                     <div class="flex justify-end items-center mt-8">
                                         <button type="button" class="btn btn-outline-danger" @click="$emit('close')">Cancel</button>
                                         <button type="submit" class="btn btn-primary ltr:ml-4 rtl:mr-4">
-                                            {{ setting?.id ? 'Update' : 'Add' }}
+                                            {{ setting?.uuid ? 'Update' : 'Add' }}
                                         </button>
                                     </div>
                                 </form>
@@ -117,7 +118,8 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
-import IconX from '@/components/icon/icon-x.vue';
+import CustomSelect from './CustomSelect.vue';
+import IconX from './icon/icon-x.vue';
 import type { Setting } from '../stores/settings';
 
 const props = defineProps<{
@@ -134,10 +136,20 @@ const formData = ref<Partial<Setting>>({
     key: '',
     value: '',
     type: 'string',
-    group: '',
+    group: 'general',
     description: '',
     is_public: false,
 });
+
+// Select options
+const typeOptions = [
+    { value: 'string', label: 'String' },
+    { value: 'integer', label: 'Integer' },
+    { value: 'float', label: 'Float' },
+    { value: 'boolean', label: 'Boolean' },
+    { value: 'json', label: 'JSON' },
+    { value: 'array', label: 'Array' }
+];
 
 // Watch for setting changes to update form
 watch(() => props.setting, (newSetting) => {
@@ -153,7 +165,7 @@ watch(() => props.setting, (newSetting) => {
             key: '',
             value: '',
             type: 'string',
-            group: '',
+            group: 'general',
             description: '',
             is_public: false,
         };

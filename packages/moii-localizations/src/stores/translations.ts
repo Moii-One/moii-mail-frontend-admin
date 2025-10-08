@@ -117,10 +117,16 @@ export const useTranslationsStore = defineStore('translations', () => {
         loading.value = true;
         error.value = null;
         try {
+            // Convert object format to array format expected by backend
+            const translationsArray = Object.entries(translationsData).map(([key, value]) => ({
+                key,
+                value
+            }));
+
             const response = await fetch(`${API_BASE_URL}/${languageCode}/bulk`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ translations: translationsData })
+                body: JSON.stringify({ translations: translationsArray })
             });
 
             if (!response.ok) {
@@ -168,6 +174,31 @@ export const useTranslationsStore = defineStore('translations', () => {
         }
     }
 
+    async function syncTranslationKeys() {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error syncing translation keys:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     function clearError() {
         error.value = null;
     }
@@ -185,6 +216,7 @@ export const useTranslationsStore = defineStore('translations', () => {
         setTranslation,
         bulkUpdate,
         deleteTranslation,
+        syncTranslationKeys,
         clearError
     };
 });

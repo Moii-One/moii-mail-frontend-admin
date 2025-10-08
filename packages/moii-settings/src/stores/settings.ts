@@ -8,7 +8,7 @@ export interface Setting {
     uuid?: string;
     key: string;
     value: any;
-    type: 'string' | 'number' | 'boolean' | 'json' | 'array';
+    type: 'string' | 'integer' | 'float' | 'boolean' | 'json' | 'array';
     group?: string | null;
     description?: string | null;
     is_public: boolean;

@@ -1,12 +1,34 @@
 # MOII Localizations Package Summary
 
 ## Overview
-The MOII Localizations package is a comprehensive Vue 3 + TypeScript solution for managing application localizations with full CRUD operations and authentication integration.
+The MOII Localizations package is a comprehensive Vue 3 + TypeScript solution for managing application localizations with full CRUD operations, UUID support, automatic translation key synchronization, and authentication integration.
 
-# MOII Localizations Package Summary
+## Key Features
 
-## Overview
-The MOII Localizations package is a comprehensive Vue 3 + TypeScript solution for managing application languages and translation strings with full CRUD operations and authentication integration.
+### Languages Management
+- ✅ Full CRUD operations with UUID support (Create, Read, Update, Delete)
+- ✅ Set default language
+- ✅ Toggle language active/inactive status
+- ✅ ISO 639-1 language code validation
+- ✅ Native name support
+- ✅ Authentication-aware API requests
+- ✅ UUID-based routing and operations
+
+### Translations Management
+- ✅ Manage translation strings per language
+- ✅ Key-value based translations with dot notation support
+- ✅ Automatic key synchronization across all language files
+- ✅ Search and filter capabilities
+- ✅ Add/Edit/Delete individual translations
+- ✅ Bulk update support
+- ✅ Translation placeholder system for missing keys
+- ✅ Sync endpoint for ensuring key consistency
+
+### Enhanced Features
+- ✅ **Automatic Key Sync**: When adding a key to one language, it's automatically added to all other languages with placeholders
+- ✅ **UUID Support**: All language operations use UUIDs instead of integer IDs for better security and scalability
+- ✅ **Translation File Management**: JSON-based storage with automatic file creation and management
+- ✅ **Dot Notation**: Support for nested translation keys (e.g., 'messages.welcome')
 
 ## Package Structure
 
@@ -56,12 +78,13 @@ moii-localizations/
 ### Language Model
 ```typescript
 interface Language {
-    id?: number;
-    code: string;              // ISO 639-1 code (2-3 letters)
-    name: string;              // Language name
-    native_name?: string;      // Native language name
-    is_default?: boolean;      // Default language flag
-    is_active?: boolean;       // Active status
+    id?: number;              // Legacy support
+    uuid?: string;            // UUID identifier (primary)
+    code: string;             // ISO 639-1 code (2-3 letters)
+    name: string;             // Language name
+    native_name?: string;     // Native language name
+    is_default?: boolean;     // Default language flag
+    is_active?: boolean;      // Active status
     created_at?: string;
     updated_at?: string;
 }
@@ -70,10 +93,37 @@ interface Language {
 ### Translation Model
 ```typescript
 interface Translation {
-    key: string;               // Translation key (supports dot notation)
-    value: string;            // Translation value
+    key: string;              // Translation key (supports dot notation)
+    value: string;           // Translation value
 }
 ```
+
+## Backend API Structure
+
+### Language Endpoints (UUID-based)
+- `GET /api/localizations/languages` - List all languages
+- `GET /api/localizations/languages/active` - List active languages
+- `GET /api/localizations/languages/{uuid}` - Get specific language
+- `POST /api/localizations/languages` - Create new language
+- `PUT /api/localizations/languages/{uuid}` - Update language
+- `DELETE /api/localizations/languages/{uuid}` - Delete language
+- `PATCH /api/localizations/languages/{uuid}/default` - Set as default
+- `PATCH /api/localizations/languages/{uuid}/toggle-active` - Toggle active status
+
+### Translation Endpoints
+- `GET /api/localizations/translations/{languageCode}` - Get all translations for language
+- `GET /api/localizations/translations/{languageCode}/keys` - Get all keys for language
+- `GET /api/localizations/translations/{languageCode}/key/{key}` - Get specific translation
+- `POST /api/localizations/translations/{languageCode}` - Set/update translation
+- `POST /api/localizations/translations/{languageCode}/bulk` - Bulk update translations
+- `DELETE /api/localizations/translations/{languageCode}/key/{key}` - Delete translation
+- `POST /api/localizations/translations/sync` - Sync all translation keys across languages
+
+### Auto-Sync Functionality
+When you add or delete a translation key in one language:
+1. **Adding a key**: Automatically adds the same key to all other active languages with a placeholder value `[TRANSLATE: {key}]`
+2. **Deleting a key**: Automatically removes the key from all other active languages
+3. **Manual sync**: Use the `/sync` endpoint to ensure all languages have consistent keys
 
 ## Routes
 
@@ -303,29 +353,47 @@ interface Localization {
 ## API Integration
 
 ### Expected Endpoints
-- `GET /api/localizations` - List all localizations
-- `POST /api/localizations` - Create new localization
-- `PUT /api/localizations/{uuid}` - Update localization
-- `DELETE /api/localizations/{uuid}` - Delete localization
-- `GET /api/localizations/{key}` - Get by key
+- `GET /api/localizations/languages` - List all languages (UUID-based)
+- `POST /api/localizations/languages` - Create new language
+- `PUT /api/localizations/languages/{uuid}` - Update language
+- `DELETE /api/localizations/languages/{uuid}` - Delete language
+- `GET /api/localizations/translations/{languageCode}` - Get translations for language
+- `POST /api/localizations/translations/{languageCode}` - Set translation (with auto-sync)
+- `DELETE /api/localizations/translations/{languageCode}/key/{key}` - Delete translation (with auto-sync)
+- `POST /api/localizations/translations/sync` - Manual sync all translation keys
 
 ### Authentication
 - Uses Bearer token from auth store
 - Automatic header injection
 - Error handling for unauthorized requests
 
+### Auto-Sync Features
+- When adding a translation key, it's automatically added to all other languages with placeholder values
+- When deleting a translation key, it's removed from all other languages
+- Manual sync endpoint available for ensuring consistency
+
 ## Usage Example
 
 ```typescript
 // In your main application
-import { localizationsRoutes, useLocalizationsStore } from './packages/moii-localizations';
+import { localizationsRoutes, useLocalizationsStore, useLanguagesStore } from './packages/moii-localizations';
 
 // Add to router
 router.addRoute(localizationsRoutes);
 
 // Use in component
 const localizationsStore = useLocalizationsStore();
-await localizationsStore.fetchLocalizations();
+const languagesStore = useLanguagesStore();
+
+// Language operations (UUID-based)
+await languagesStore.fetchLanguages();
+await languagesStore.updateLanguage('uuid-here', { name: 'New Name' });
+await languagesStore.deleteLanguage('uuid-here');
+
+// Translation operations with auto-sync
+await localizationsStore.fetchTranslations('en');
+await localizationsStore.setTranslation('en', 'welcome.message', 'Welcome!'); // Auto-syncs to other languages
+await localizationsStore.syncTranslationKeys(); // Manual sync
 ```
 
 ## Dependencies

@@ -33,7 +33,7 @@
                                 <icon-x />
                             </button>
                             <div class="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
-                                {{ language?.id ? 'Edit Language' : 'Add Language' }}
+                                {{ language?.uuid ? 'Edit Language' : 'Add Language' }}
                             </div>
                             <div class="p-5">
                                 <form @submit.prevent="$emit('save', formData)">
@@ -45,7 +45,7 @@
                                             placeholder="Enter language code (e.g., en, es, fr)" 
                                             class="form-input" 
                                             v-model="formData.code"
-                                            :disabled="!!language?.id"
+                                            :disabled="!!language?.uuid"
                                             maxlength="3"
                                         />
                                         <small class="text-white-dark">ISO 639-1 language code (2-3 letters)</small>
@@ -83,7 +83,7 @@
                                     <div class="flex justify-end items-center mt-8">
                                         <button type="button" class="btn btn-outline-danger" @click="$emit('close')">Cancel</button>
                                         <button type="submit" class="btn btn-primary ltr:ml-4 rtl:mr-4">
-                                            {{ language?.id ? 'Update' : 'Add' }}
+                                            {{ language?.uuid ? 'Update' : 'Add' }}
                                         </button>
                                     </div>
                                 </form>
@@ -99,7 +99,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
-import IconX from '@/components/icon/icon-x.vue';
+import IconX from './icon/icon-x.vue';
 import type { Language } from '../stores/languages';
 
 const props = defineProps<{

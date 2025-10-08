@@ -10,6 +10,15 @@ const routes: RouteRecordRaw[] = [
             requiresAuth: true,
         },
     },
+    {
+        path: '/settings/feature-flags',
+        name: 'feature-flags',
+        component: () => import('../views/FeatureFlagsList.vue'),
+        meta: {
+            title: 'Feature Flags',
+            requiresAuth: true,
+        },
+    },
 ];
 
 export default routes;

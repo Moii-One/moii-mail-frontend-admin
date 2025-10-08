@@ -47,7 +47,7 @@ interface Setting {
     id?: number;
     key: string;
     value: any;
-    type: 'string' | 'number' | 'boolean' | 'json' | 'array';
+    type: 'string' | 'integer' | 'float' | 'boolean' | 'json' | 'array';
     group?: string | null;
     description?: string | null;
     is_public: boolean;
@@ -76,7 +76,7 @@ interface Setting {
   - Form fields:
     - Key (text input, disabled on edit)
     - Value (textarea)
-    - Type (select: string/number/boolean/json/array)
+    - Type (select: string/integer/float/boolean/json/array)
     - Group (text input, optional)
     - Description (textarea, optional)
     - Is Public (checkbox)
