@@ -76,15 +76,10 @@
                     </template>
                     <template #enabled="data">
                         <div class="flex items-center">
-                            <label class="w-12 h-6 relative">
-                                <input 
-                                    type="checkbox" 
-                                    class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" 
-                                    :checked="data.value.enabled"
-                                    @change="toggleFeature(data.value, ($event.target as HTMLInputElement).checked)"
-                                    :disabled="featureFlagsStore.loading"
-                                />
-                                <span class="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full before:transition-all before:duration-300 peer-checked:before:left-7 peer-checked:bg-primary"></span>
+                            <label class="w-12 h-6 relative cursor-pointer" @click="handleToggle(data.value)" :class="{ 'opacity-50 cursor-not-allowed': featureFlagsStore.loading }">
+                                <span :class="data.value.enabled ? 'bg-primary' : 'bg-[#ebedf2] dark:bg-dark'" class="block h-full rounded-full relative">
+                                    <div class="absolute w-4 h-4 bg-white rounded-full top-1 transition-all duration-300" :style="{ left: data.value.enabled ? '28px' : '4px' }"></div>
+                                </span>
                             </label>
                             <span class="ltr:ml-3 rtl:mr-3 text-sm" :class="data.value.enabled ? 'text-success' : 'text-danger'">
                                 {{ data.value.enabled ? 'Enabled' : 'Disabled' }}
@@ -250,12 +245,20 @@ const saveFeature = async (formData: FeatureFlagFormData) => {
 };
 
 const toggleFeature = async (feature: FeatureFlag, enabled: boolean) => {
+    console.log('Toggling feature:', feature.key, 'to', enabled);
     try {
         await featureFlagsStore.toggleFeature(feature.key.replace('feature.', ''), enabled);
         const status = enabled ? 'enabled' : 'disabled';
         showMessage(`"${feature.name}" has been ${status}.`);
     } catch (err) {
+        console.error('Error toggling feature:', err);
         showMessage('Failed to toggle feature flag.', 'error');
+    }
+};
+
+const handleToggle = (feature: FeatureFlag) => {
+    if (!featureFlagsStore.loading) {
+        toggleFeature(feature, !feature.enabled);
     }
 };
 

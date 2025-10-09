@@ -736,6 +736,15 @@
                             </router-link>
                         </li>
 
+                        <li class="menu nav-item">
+                            <router-link to="/users" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconUsers class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">User Management</span>
+                                </div>
+                            </router-link>
+                        </li>
+
                         <h2 class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                             <icon-minus class="w-4 h-5 flex-none hidden" />
                             <span>{{ $t('supports') }}</span>
@@ -791,6 +800,7 @@
     import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication.vue';
     import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation.vue';
     import IconShield from '../../../packages/moii-limiter/src/components/icon/icon-shield.vue';
+    import IconUsers from '../../../packages/moii-users/src/components/icon/icon-users.vue';
 
     const store = useAppStore();
     const activeDropdown: any = ref('');

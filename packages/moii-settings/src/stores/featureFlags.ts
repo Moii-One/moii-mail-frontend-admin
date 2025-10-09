@@ -281,10 +281,26 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
     }
 
     async function toggleFeature(featureName: string, enabled: boolean) {
-        if (enabled) {
-            await enableFeature(featureName);
-        } else {
-            await disableFeature(featureName);
+        const key = featureName.startsWith('feature.') ? featureName : `feature.${featureName}`;
+        
+        // Optimistic update
+        const originalEnabled = features.value[key]?.enabled;
+        if (features.value[key]) {
+            features.value[key].enabled = enabled;
+        }
+        
+        try {
+            if (enabled) {
+                await enableFeature(featureName);
+            } else {
+                await disableFeature(featureName);
+            }
+        } catch (err) {
+            // Revert on error
+            if (features.value[key]) {
+                features.value[key].enabled = originalEnabled;
+            }
+            throw err;
         }
     }
 

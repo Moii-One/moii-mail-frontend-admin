@@ -6,11 +6,13 @@ import { exampleRoutes } from '../../packages/moii-example/src/router';
 import settingsRoutes from '../../packages/moii-settings/src/router';
 import localizationsRoutes from '../../packages/moii-localizations/src/router';
 import rateLimitsRoutes from '../../packages/moii-limiter/src/router';
+import userRoutes from '../../packages/moii-users/src/router';
 import { requiresAuth, isAuthenticated, getLoginRedirect } from '../../packages/moii-auth/src/composables/useAuth';
 import { requiresAuth as exampleRequiresAuth } from '../../packages/moii-example/src/composables/useAuth';
 import { requiresAuth as settingsRequiresAuth } from '../../packages/moii-settings/src/composables/useAuth';
 import { requiresAuth as localizationsRequiresAuth } from '../../packages/moii-localizations/src/composables/useAuth';
 import { requiresAuth as rateLimitsRequiresAuth } from '../../packages/moii-limiter/src/composables/useAuth';
+import { requiresAuth as usersRequiresAuth } from '../../packages/moii-users/src/composables/useAuth';
 import HomeView from '../views/index.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -522,6 +524,9 @@ const routes: RouteRecordRaw[] = [
 
     // rate limits (requires authentication)
     ...rateLimitsRoutes,
+
+    // users (requires authentication)
+    ...userRoutes,
 ];
 
 const router = createRouter({
@@ -548,7 +553,7 @@ router.beforeEach((to, from, next) => {
     }
 
     // Check if route requires authentication
-    if (requiresAuth(to) || exampleRequiresAuth(to) || localizationsRequiresAuth(to) || settingsRequiresAuth(to) || rateLimitsRequiresAuth(to)) {
+    if (requiresAuth(to) || exampleRequiresAuth(to) || localizationsRequiresAuth(to) || settingsRequiresAuth(to) || rateLimitsRequiresAuth(to) || usersRequiresAuth(to)) {
         if (!isAuthenticated()) {
             // User not authenticated, redirect to login
             const loginPath = getLoginRedirect(to);
