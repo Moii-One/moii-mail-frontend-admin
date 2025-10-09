@@ -1,62 +1,12 @@
 <template>
     <div class="mb-6">
         <!-- Header Panel -->
-        <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-                <h5 class="font-semibold text-lg dark:text-white-light">Permissions Management</h5>
-                <p class="text-white-dark text-sm mt-1">View and manage system permissions</p>
-            </div>
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    @click="openCreatePermissionModal"
-                    :disabled="rolesStore.loading"
-                >
-                    <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Create Permission
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    @click="showFilters = !showFilters"
-                >
-                    <icon-menu class="ltr:mr-2 rtl:ml-2" />
-                    Filters
-                    <icon-caret-down class="ltr:ml-2 rtl:mr-2" :class="{ 'rotate-180': showFilters }" />
-                </button>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div v-if="showFilters" class="panel mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                    <label class="text-sm font-semibold mb-2 block">Search</label>
-                    <input
-                        type="text"
-                        placeholder="Search permissions..."
-                        class="form-input"
-                        v-model="searchTerm"
-                    />
-                </div>
-                <div>
-                    <label class="text-sm font-semibold mb-2 block">Category</label>
-                    <select v-model="filterCategory" class="form-select">
-                        <option value="">All Categories</option>
-                        <option v-for="category in uniqueCategories" :key="category" :value="category">
-                            {{ category }}
-                        </option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="button" class="btn btn-outline-warning" @click="clearFilters">
-                        <icon-refresh class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
-                        Clear
-                    </button>
-                </div>
-            </div>
-        </div>
+        <PermissionsHeader
+            title="Permissions Management"
+            v-model="filters"
+            :unique-categories="uniqueCategories"
+            @create-permission="openCreatePermissionModal"
+        />
 
         <!-- Permissions Statistics -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -150,7 +100,7 @@
                         <div class="text-xs text-white-dark">{{ getTimeAgo(data.value.created_at) }}</div>
                     </template>
                     <template #actions="data">
-                        <div class="flex items-center gap-2">
+                        <div class="flex gap-2 items-center justify-center">
                             <button
                                 type="button"
                                 class="btn btn-outline-info btn-sm"
@@ -249,6 +199,7 @@
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { useRolesStore, type Permission } from '../stores/roles';
+import PermissionsHeader from '../components/PermissionsHeader.vue';
 import IconPlus from '../components/icon/icon-plus.vue';
 import IconMenu from '../components/icon/icon-menu.vue';
 import IconCaretDown from '../components/icon/icon-caret-down.vue';
@@ -260,12 +211,16 @@ import IconEdit from '../components/icon/icon-edit.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
 import IconX from '../components/icon/icon-x.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
+import VueCollapsible from 'vue-height-collapsible/vue3';
+import CustomSelect from '../components/CustomSelect.vue';
+import IconSearch from '../components/icon/icon-search.vue';
 
 const rolesStore = useRolesStore();
 
-const showFilters = ref(false);
-const searchTerm = ref('');
-const filterCategory = ref('');
+const filters = ref({
+    searchTerm: '',
+    filterCategory: ''
+});
 
 const showPermissionModal = ref(false);
 const isEditing = ref(false);
@@ -280,8 +235,8 @@ const permissionForm = ref({
 const filteredPermissions = computed(() => {
     let filtered = rolesStore.permissions;
 
-    if (searchTerm.value) {
-        const term = searchTerm.value.toLowerCase();
+    if (filters.value.searchTerm) {
+        const term = filters.value.searchTerm.toLowerCase();
         filtered = filtered.filter(permission => 
             permission.key.toLowerCase().includes(term) ||
             (permission.description && permission.description.toLowerCase().includes(term)) ||
@@ -289,8 +244,8 @@ const filteredPermissions = computed(() => {
         );
     }
 
-    if (filterCategory.value) {
-        filtered = filtered.filter(permission => permission.category === filterCategory.value);
+    if (filters.value.filterCategory) {
+        filtered = filtered.filter(permission => permission.category === filters.value.filterCategory);
     }
 
     return filtered;
@@ -299,9 +254,17 @@ const filteredPermissions = computed(() => {
 const uniqueCategories = computed(() => {
     const categories = rolesStore.permissions
         .map(p => p.category)
-        .filter(Boolean);
+        .filter((c): c is string => Boolean(c));
     return [...new Set(categories)].sort();
 });
+
+const categoryOptions = computed(() => [
+    { value: '', label: 'All Categories' },
+    ...uniqueCategories.value.map(category => ({
+        value: category,
+        label: category
+    }))
+]);
 
 const assignedPermissions = computed(() => {
     return rolesStore.permissions.filter(permission => {
@@ -336,8 +299,10 @@ const loadData = async () => {
 };
 
 const clearFilters = () => {
-    searchTerm.value = '';
-    filterCategory.value = '';
+    filters.value = {
+        searchTerm: '',
+        filterCategory: ''
+    };
 };
 
 const getPermissionRoles = (permissionKey: string) => {

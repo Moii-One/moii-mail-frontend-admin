@@ -9,7 +9,7 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ parseUserAgent(session.user_agent) }}
+                        {{ parseUserAgent(session.browser || session.device_info) }}
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                         IP: {{ session.ip_address }}
@@ -58,15 +58,18 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const parseUserAgent = (userAgent: string): string => {
-    if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+    if (!userAgent) return 'Unknown Device';
+    
+    const ua = userAgent.toLowerCase();
+    if (ua.includes('chrome') && !ua.includes('edg')) {
         return 'Chrome Browser';
-    } else if (userAgent.includes('Firefox')) {
+    } else if (ua.includes('firefox')) {
         return 'Firefox Browser';
-    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    } else if (ua.includes('safari') && !ua.includes('chrome')) {
         return 'Safari Browser';
-    } else if (userAgent.includes('Edg')) {
+    } else if (ua.includes('edg') || ua.includes('edge')) {
         return 'Edge Browser';
-    } else if (userAgent.includes('Mobile')) {
+    } else if (ua.includes('mobile') || ua.includes('android') || ua.includes('ios')) {
         return 'Mobile Device';
     } else {
         return 'Unknown Device';

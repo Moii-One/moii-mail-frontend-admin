@@ -13,7 +13,7 @@
                     @click="terminateAllSessions"
                     :disabled="sessionsStore.loading"
                 >
-                    <icon-logout class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
+                    <icon-trash class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Terminate All Sessions
                 </button>
             </div>
@@ -110,10 +110,8 @@
                                 :disabled="sessionsStore.loading"
                                 title="Terminate this session"
                             >
-                                <icon-logout class="w-3 h-3" />
-                                Terminate
-                            </button>
-                            <span v-if="data.value.is_current" class="text-xs text-success ml-2">(Current)</span>
+                                <icon-trash class="w-3 h-3" /> 
+                            </button>                        
                         </div>
                     </template>
                 </vue3-datatable>
@@ -133,7 +131,7 @@ import { useSessionsStore, type UserSession } from '../stores/sessions';
 import IconMonitor from '../components/icon/icon-monitor.vue';
 import IconGlobe from '../components/icon/icon-globe.vue';
 import IconClock from '../components/icon/icon-clock.vue';
-import IconLogout from '../components/icon/icon-logout.vue';
+import IconTrash from '../components/icon/icon-trash.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const route = useRoute();

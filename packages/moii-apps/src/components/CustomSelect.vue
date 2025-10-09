@@ -1,28 +1,39 @@
 <template>
     <div class="custom-multiselect-wrapper">
-        <multiselect
-            :model-value="selectedOption"
-            :options="options"
-            class="custom-multiselect"
-            :searchable="searchable"
-            :allow-empty="allowEmpty"
-            :placeholder="placeholder"
-            :track-by="trackBy || 'value'"
-            :label="label || 'label'"
-            :disabled="disabled"
-            :max-height="300"
-            selected-label=""
-            select-label=""
-            deselect-label=""
-            @update:model-value="handleChange"
-        >
-            <template #noResult>
-                <span class="text-white-dark">No options found</span>
-            </template>
-            <template #noOptions>
-                <span class="text-white-dark">No options available</span>
-            </template>
-        </multiselect>
+        <div class="relative">
+            <multiselect
+                :model-value="selectedOption"
+                :options="options"
+                class="custom-multiselect"
+                :searchable="searchable"
+                :allow-empty="allowEmpty"
+                :placeholder="placeholder"
+                :track-by="trackBy || 'value'"
+                :label="label || 'label'"
+                :disabled="disabled"
+                :max-height="300"
+                selected-label=""
+                select-label=""
+                deselect-label=""
+                @update:model-value="handleChange"
+            >
+                <template #noResult>
+                    <span class="text-white-dark">No options found</span>
+                </template>
+                <template #noOptions>
+                    <span class="text-white-dark">No options available</span>
+                </template>
+            </multiselect>
+            <button
+                v-if="modelValue && allowEmpty"
+                type="button"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                @click="clearSelection"
+                title="Clear selection"
+            >
+                <icon-x class="w-4 h-4" />
+            </button>
+        </div>
     </div>
 </template>
 
@@ -96,6 +107,20 @@ const handleChange = (selected: any) => {
     } else {
         emit('update:modelValue', selected);
     }
+};
+
+const clearSelection = () => {
+    emit('update:modelValue', '');
+};
+</script>
+
+<script lang="ts">
+import IconX from './icon/icon-x.vue';
+
+export default {
+    components: {
+        IconX,
+    },
 };
 </script>
 

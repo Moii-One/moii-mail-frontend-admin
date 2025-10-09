@@ -1,62 +1,11 @@
 <template>
     <div class="mb-6">
         <!-- Header Panel -->
-        <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-                <h5 class="font-semibold text-lg dark:text-white-light">Roles Management</h5>
-                <p class="text-white-dark text-sm mt-1">Create, edit, and manage system roles</p>
-            </div>
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    @click="openCreateRoleModal"
-                    :disabled="rolesStore.loading"
-                >
-                    <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Create Role
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    @click="showFilters = !showFilters"
-                >
-                    <icon-menu class="ltr:mr-2 rtl:ml-2" />
-                    Filters
-                    <icon-caret-down class="ltr:ml-2 rtl:mr-2" :class="{ 'rotate-180': showFilters }" />
-                </button>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div v-if="showFilters" class="panel mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                    <label class="text-sm font-semibold mb-2 block">Search</label>
-                    <input
-                        type="text"
-                        placeholder="Search roles..."
-                        class="form-input"
-                        v-model="searchTerm"
-                    />
-                </div>
-                <div>
-                    <label class="text-sm font-semibold mb-2 block">Scope Type</label>
-                    <select v-model="filterScope" class="form-select">
-                        <option value="">All Scopes</option>
-                        <option value="system">System</option>
-                        <option value="organisation">Organisation</option>
-                        <option value="app">App</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="button" class="btn btn-outline-warning" @click="clearFilters">
-                        <icon-refresh class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
-                        Clear
-                    </button>
-                </div>
-            </div>
-        </div>
+        <RolesHeader
+            title="Roles Management"
+            v-model="filters"
+            @create-role="openCreateRoleModal"
+        />
 
         <!-- Roles Statistics -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -138,7 +87,7 @@
                         <div class="text-xs text-white-dark">{{ getTimeAgo(data.value.created_at) }}</div>
                     </template>
                     <template #actions="data">
-                        <div class="flex items-center gap-2">
+                        <div class="flex gap-2 items-center justify-center">
                             <button
                                 type="button"
                                 class="btn btn-outline-primary btn-sm"
@@ -146,7 +95,7 @@
                                 :disabled="rolesStore.loading"
                                 title="Manage permissions"
                             >
-                                <icon-key class="w-3 h-3" />
+                                <icon-shield-check class="w-3 h-3" />
                             </button>
                             <button
                                 type="button"
@@ -207,7 +156,7 @@
                                     id="roleSlug"
                                     type="text"
                                     v-model="roleForm.slug"
-                                    placeholder="Enter role slug (auto-generated if empty)"
+                                    placeholder="Auto-generated from name"
                                     class="form-input mt-1"
                                 />
                             </div>
@@ -265,78 +214,13 @@
         </div>
 
         <!-- Manage Permissions Modal -->
-        <div class="fixed inset-0 bg-[black]/60 z-[999] overflow-y-auto hidden" :class="{ '!block': showPermissionsModal }">
-            <div class="flex items-start justify-center min-h-screen px-4 pt-6">
-                <div 
-                    class="panel border-0 p-0 rounded-lg overflow-hidden w-full max-w-2xl my-8 text-black dark:text-white-dark animate__animated animate__fadeIn"
-                    @click.stop
-                >
-                    <div class="flex bg-[#fbfbfb] dark:bg-[#121c2c] items-center justify-between px-5 py-3">
-                        <h5 class="font-bold text-lg">Manage Permissions: {{ selectedRole?.name }}</h5>
-                        <button type="button" @click="closePermissionsModal" class="text-white-dark hover:text-dark">
-                            <icon-x class="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div class="p-5">
-                        <div class="mb-5">
-                            <div class="flex items-center justify-between mb-3">
-                                <h6 class="font-semibold">Available Permissions</h6>
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-success btn-sm"
-                                        @click="selectAllPermissions"
-                                    >
-                                        Select All
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-warning btn-sm"
-                                        @click="deselectAllPermissions"
-                                    >
-                                        Deselect All
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="max-h-96 overflow-y-auto border rounded p-3 space-y-2">
-                                <label 
-                                    v-for="permission in rolesStore.permissions" 
-                                    :key="permission.uuid"
-                                    class="flex items-start gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        :value="permission.key"
-                                        v-model="selectedPermissions"
-                                        class="form-checkbox"
-                                    />
-                                    <div class="flex-1">
-                                        <div class="font-medium text-sm">{{ permission.key }}</div>
-                                        <div class="text-xs text-white-dark" v-if="permission.description">
-                                            {{ permission.description }}
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="flex justify-end items-center mt-8">
-                            <button type="button" @click="closePermissionsModal" class="btn btn-outline-danger">
-                                Cancel
-                            </button>
-                            <button 
-                                type="button"
-                                @click="savePermissions"
-                                class="btn btn-primary ltr:ml-4 rtl:mr-4"
-                                :disabled="rolesStore.loading"
-                            >
-                                <div v-if="rolesStore.loading" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Save Permissions
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ManagePermissionsModal
+            :show-modal="showPermissionsModal"
+            :role="selectedRole"
+            :loading="rolesStore.loading"
+            @close="closePermissionsModal"
+            @save="handleSavePermissions"
+        />
     </div>
 </template>
 
@@ -344,6 +228,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useRolesStore, type Role } from '../stores/roles';
+import RolesHeader from '../components/RolesHeader.vue';
+import ManagePermissionsModal from '../components/ManagePermissionsModal.vue';
 import IconPlus from '../components/icon/icon-plus.vue';
 import IconMenu from '../components/icon/icon-menu.vue';
 import IconCaretDown from '../components/icon/icon-caret-down.vue';
@@ -356,12 +242,16 @@ import IconEdit from '../components/icon/icon-edit.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
 import IconX from '../components/icon/icon-x.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
+import VueCollapsible from 'vue-height-collapsible/vue3';
+import CustomSelect from '../components/CustomSelect.vue';
+import IconSearch from '../components/icon/icon-search.vue';
 
 const rolesStore = useRolesStore();
 
-const showFilters = ref(false);
-const searchTerm = ref('');
-const filterScope = ref('');
+const filters = ref({
+    searchTerm: '',
+    filterScope: ''
+});
 
 const showRoleModal = ref(false);
 const showPermissionsModal = ref(false);
@@ -380,16 +270,16 @@ const roleForm = ref({
 const filteredRoles = computed(() => {
     let filtered = rolesStore.roles;
 
-    if (searchTerm.value) {
-        const term = searchTerm.value.toLowerCase();
+    if (filters.value.searchTerm) {
+        const term = filters.value.searchTerm.toLowerCase();
         filtered = filtered.filter(role => 
             role.name.toLowerCase().includes(term) ||
             role.slug.toLowerCase().includes(term)
         );
     }
 
-    if (filterScope.value) {
-        filtered = filtered.filter(role => role.scope_type === filterScope.value);
+    if (filters.value.filterScope) {
+        filtered = filtered.filter(role => role.scope_type === filters.value.filterScope);
     }
 
     return filtered;
@@ -403,6 +293,13 @@ const organisationRoles = computed(() =>
     rolesStore.roles.filter(role => role.scope_type === 'organisation')
 );
 
+const scopeOptions = [
+    { value: '', label: 'All Scopes' },
+    { value: 'system', label: 'System' },
+    { value: 'organisation', label: 'Organisation' },
+    { value: 'app', label: 'App' }
+];
+
 const cols = ref([
     { field: 'name', title: 'Name' },
     { field: 'scope_type', title: 'Scope' },
@@ -413,7 +310,7 @@ const cols = ref([
 
 // Auto-generate slug from name
 watch(() => roleForm.value.name, (newName) => {
-    if (!roleForm.value.slug) {
+    if (newName) {
         roleForm.value.slug = newName.toLowerCase()
             .replace(/[^a-z0-9]/g, '-')
             .replace(/-+/g, '-')
@@ -438,8 +335,10 @@ const loadData = async () => {
 };
 
 const clearFilters = () => {
-    searchTerm.value = '';
-    filterScope.value = '';
+    filters.value = {
+        searchTerm: '',
+        filterScope: ''
+    };
 };
 
 const getScopeColor = (scope: string) => {
@@ -566,29 +465,19 @@ const deleteRole = async (role: Role) => {
 
 const managePermissions = (role: Role) => {
     selectedRole.value = role;
-    selectedPermissions.value = role.permissions?.map(p => p.key) || [];
     showPermissionsModal.value = true;
 };
 
 const closePermissionsModal = () => {
     showPermissionsModal.value = false;
     selectedRole.value = null;
-    selectedPermissions.value = [];
 };
 
-const selectAllPermissions = () => {
-    selectedPermissions.value = rolesStore.permissions.map(p => p.key);
-};
-
-const deselectAllPermissions = () => {
-    selectedPermissions.value = [];
-};
-
-const savePermissions = async () => {
+const handleSavePermissions = async (permissions: string[]) => {
     if (!selectedRole.value) return;
 
     try {
-        await rolesStore.assignPermissionsToRole(selectedRole.value.uuid, selectedPermissions.value);
+        await rolesStore.assignPermissionsToRole(selectedRole.value.uuid, permissions);
         showMessage('Permissions updated successfully.');
         closePermissionsModal();
         await loadData();
@@ -597,6 +486,26 @@ const savePermissions = async () => {
         showMessage(error?.message || 'Failed to update permissions.', 'error');
     }
 };
+
+const groupedPermissions = computed(() => {
+    const groups: Record<string, any[]> = {};
+    
+    rolesStore.permissions.forEach(permission => {
+        const category = permission.key.split('.')[0] || 'other';
+        if (!groups[category]) {
+            groups[category] = [];
+        }
+        groups[category].push(permission);
+    });
+    
+    return Object.entries(groups).map(([category, permissions]) => ({
+        category,
+        permissions,
+        count: permissions.length
+    })).sort((a, b) => a.category.localeCompare(b.category));
+});
+
+const expandedCategories = ref<Record<string, boolean>>({});
 
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = Swal.mixin({

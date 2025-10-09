@@ -141,7 +141,7 @@
                                 @click="viewUser(data.value)"
                                 title="View User Details"
                             >
-                                <icon-eye class="w-4 h-4" />
+                                <icon-eye class="w-3 h-3" />
                             </button>
                             <button
                                 type="button"
@@ -149,7 +149,7 @@
                                 @click="editUser(data.value)"
                                 title="Edit User"
                             >
-                                <icon-edit class="w-4 h-4" />
+                                <icon-edit class="w-3 h-3" />
                             </button>
                             <div class="dropdown">
                                 <Popper
@@ -162,7 +162,7 @@
                                         class="btn btn-sm btn-outline-secondary"
                                         title="More Actions"
                                     >
-                                        <icon-dots-vertical class="w-4 h-4" />
+                                        <icon-dots-vertical class="w-3 h-3" />
                                     </button>
                                     <template #content="{ close }">
                                         <ul class="!min-w-[170px]" @click="close()">
@@ -172,8 +172,8 @@
                                                     @click="toggleUserStatus(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-pause v-if="data.value.status === 'active'" class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
-                                                    <icon-play v-else class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-pause v-if="data.value.status === 'active'" class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-play v-else class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     {{ data.value.status === 'active' ? 'Deactivate' : 'Activate' }}
                                                 </button>
                                             </li>
@@ -183,8 +183,8 @@
                                                     @click="toggleAccountLock(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-lock v-if="!data.value.is_locked" class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
-                                                    <icon-unlock v-else class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-lock v-if="!data.value.is_locked" class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-unlock v-else class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     {{ data.value.is_locked ? 'Unlock Account' : 'Lock Account' }}
                                                 </button>
                                             </li>
@@ -194,7 +194,7 @@
                                                     @click="resetFailedAttempts(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-refresh class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-refresh class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     Reset Failed Attempts
                                                 </button>
                                             </li>
@@ -204,7 +204,7 @@
                                                     @click="manageUser2FA(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-shield class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-shield class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     {{ data.value.two_factor_enabled ? 'Disable' : 'Enable' }} 2FA
                                                 </button>
                                             </li>
@@ -214,7 +214,7 @@
                                                     @click="viewUserSessions(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-monitor class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-monitor class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     View Sessions
                                                 </button>
                                             </li>
@@ -224,7 +224,7 @@
                                                     @click="manageUserRoles(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-shield-check class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-shield-check class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     Manage Roles
                                                 </button>
                                             </li>
@@ -234,7 +234,7 @@
                                                     @click="terminateUserSessions(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-logout class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-logout class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     Terminate Sessions
                                                 </button>
                                             </li>
@@ -247,7 +247,7 @@
                                                     @click="deleteUser(data.value)"
                                                     :disabled="usersStore.loading"
                                                 >
-                                                    <icon-trash class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    <icon-trash class="w-3 h-3 ltr:mr-2 rtl:ml-2 shrink-0" />
                                                     Delete User
                                                 </button>
                                             </li>

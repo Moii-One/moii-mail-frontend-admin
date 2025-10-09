@@ -3,16 +3,16 @@
         <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h5 class="font-semibold text-lg dark:text-white-light">{{ title }}</h5>
-                <p class="text-white-dark text-sm mt-1">Manage users, accounts, and permissions</p>
+                <p class="text-white-dark text-sm mt-1">View and manage system permissions</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button
                     type="button"
                     class="btn btn-primary"
-                    @click="$emit('create-user')"
+                    @click="$emit('create-permission')"
                 >
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Create User
+                    Create Permission
                 </button>
                 <button
                     type="button"
@@ -29,17 +29,17 @@
         <!-- Filters Accordion -->
         <vue-collapsible :isOpen="showFilters">
             <div class="panel p-4 space-y-4 mb-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Search -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Search</label>
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search users..."
+                                placeholder="Search permissions..."
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
-                                :value="modelValue.search"
-                                @input="updateFilter('search', ($event.target as HTMLInputElement).value)"
+                                :value="modelValue.searchTerm"
+                                @input="updateFilter('searchTerm', ($event.target as HTMLInputElement).value)"
                             />
                             <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
                                 <icon-search class="mx-auto" />
@@ -47,44 +47,22 @@
                         </div>
                     </div>
 
-                    <!-- Status Filter -->
+                    <!-- Category Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Status</label>
+                        <label class="text-sm font-semibold mb-2 block">Category</label>
                         <CustomSelect
-                            :model-value="modelValue.status"
-                            :options="statusOptions"
-                            placeholder="All Status"
-                            @update:model-value="updateFilter('status', $event)"
-                        />
-                    </div>
-
-                    <!-- Company Filter -->
-                    <div>
-                        <label class="text-sm font-semibold mb-2 block">Company</label>
-                        <CustomSelect
-                            :model-value="modelValue.company"
-                            :options="companyOptions"
-                            placeholder="All Companies"
-                            @update:model-value="updateFilter('company', $event)"
-                        />
-                    </div>
-
-                    <!-- Locked Filter -->
-                    <div>
-                        <label class="text-sm font-semibold mb-2 block">Account Status</label>
-                        <CustomSelect
-                            :model-value="modelValue.locked"
-                            :options="lockedOptions"
-                            placeholder="All Accounts"
-                            @update:model-value="updateFilter('locked', $event)"
+                            :model-value="modelValue.filterCategory"
+                            :options="categoryOptions"
+                            placeholder="All Categories"
+                            @update:model-value="updateFilter('filterCategory', $event)"
                         />
                     </div>
                 </div>
 
                 <!-- Clear Filters -->
                 <div class="flex items-center justify-end">
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         class="btn btn-outline-warning"
                         @click="clearFilters"
                     >
@@ -98,40 +76,42 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { ref, computed } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
-import { useUsersStore } from '../stores/users';
 import CustomSelect from './CustomSelect.vue';
-import IconPlus from '../components/icon/icon-plus.vue';
-import IconMenu from '../components/icon/icon-menu.vue';
-import IconCaretDown from '../components/icon/icon-caret-down.vue';
-import IconSearch from '../components/icon/icon-search.vue';
-import IconRefresh from '../components/icon/icon-refresh.vue';
-
-export interface UserFilterModel {
-    search: string;
-    status: string;
-    company: string;
-    locked: string;
-}
+import IconPlus from './icon/icon-plus.vue';
+import IconMenu from './icon/icon-menu.vue';
+import IconCaretDown from './icon/icon-caret-down.vue';
+import IconRefresh from './icon/icon-refresh.vue';
+import IconSearch from './icon/icon-search.vue';
 
 interface Props {
     title: string;
-    modelValue: UserFilterModel;
-}
-
-interface Emits {
-    (e: 'update:modelValue', value: UserFilterModel): void;
-    (e: 'create-user'): void;
+    modelValue: {
+        searchTerm: string;
+        filterCategory: string;
+    };
+    uniqueCategories: string[];
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
 
-const usersStore = useUsersStore();
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: Props['modelValue']): void;
+    (e: 'create-permission'): void;
+}>();
+
 const showFilters = ref(false);
 
-const updateFilter = (key: keyof UserFilterModel, value: string) => {
+const categoryOptions = computed(() => [
+    { value: '', label: 'All Categories' },
+    ...props.uniqueCategories.map(category => ({
+        value: category,
+        label: category
+    }))
+]);
+
+const updateFilter = (key: keyof Props['modelValue'], value: string) => {
     emit('update:modelValue', {
         ...props.modelValue,
         [key]: value
@@ -140,44 +120,10 @@ const updateFilter = (key: keyof UserFilterModel, value: string) => {
 
 const clearFilters = () => {
     emit('update:modelValue', {
-        search: '',
-        status: '',
-        company: '',
-        locked: ''
+        searchTerm: '',
+        filterCategory: ''
     });
 };
-
-// Select options
-const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'suspended', label: 'Suspended' }
-];
-
-const lockedOptions = [
-    { value: '', label: 'All Accounts' },
-    { value: 'false', label: 'Unlocked' },
-    { value: 'true', label: 'Locked' }
-];
-
-// Get unique companies from users
-const availableCompanies = computed(() => {
-    const companies = new Set(
-        usersStore.users
-            .map(user => user.company)
-            .filter(company => company && company.trim() !== '')
-    );
-    return Array.from(companies).sort();
-});
-
-const companyOptions = computed(() => [
-    { value: '', label: 'All Companies' },
-    ...availableCompanies.value.map(company => ({
-        value: company,
-        label: company
-    }))
-]);
 </script>
 
 <style scoped>

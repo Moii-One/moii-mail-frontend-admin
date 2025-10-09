@@ -92,17 +92,47 @@
                     No permissions available
                 </div>
                 
-                <div v-else class="space-y-2 max-h-96 overflow-y-auto">
+                <div v-else class="space-y-3">
                     <div 
-                        v-for="permission in userPermissions" 
-                        :key="permission.uuid"
-                        class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                        v-for="group in groupedPermissions" 
+                        :key="group.category"
+                        class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
                     >
-                        <div>
-                            <code class="text-sm font-mono text-primary">{{ permission.key }}</code>
-                            <p class="text-xs text-white-dark mt-1" v-if="permission.description">
-                                {{ permission.description }}
-                            </p>
+                        <button
+                            type="button"
+                            @click="toggleCategory(group.category)"
+                            class="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-sm">{{ group.category.charAt(0).toUpperCase() + group.category.slice(1) }}</span>
+                                <span class="badge badge-outline-primary text-xs">{{ group.count }}</span>
+                            </div>
+                            <svg 
+                                class="w-4 h-4 transition-transform" 
+                                :class="{ 'rotate-180': expandedCategories[group.category] }"
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <div v-if="expandedCategories[group.category]" class="p-3 bg-white dark:bg-gray-900">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div 
+                                    v-for="permission in group.permissions" 
+                                    :key="permission.uuid"
+                                    class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm"
+                                >
+                                    <div class="flex-1 min-w-0">
+                                        <code class="text-xs font-mono text-primary block truncate">{{ permission.key }}</code>
+                                        <p class="text-xs text-white-dark mt-1" v-if="permission.description">
+                                            {{ permission.description }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -186,10 +216,29 @@ const userRoles = ref<Role[]>([]);
 const userPermissions = ref<any[]>([]);
 const showAssignRoleModal = ref(false);
 const selectedRoleUuid = ref('');
+const expandedCategories = ref<Record<string, boolean>>({});
 
 const availableRoles = computed(() => {
     const assignedRoleUuids = userRoles.value.map(r => r.uuid);
     return rolesStore.roles.filter(role => !assignedRoleUuids.includes(role.uuid));
+});
+
+const groupedPermissions = computed(() => {
+    const groups: Record<string, any[]> = {};
+    
+    userPermissions.value.forEach(permission => {
+        const category = permission.key.split('.')[0] || 'other';
+        if (!groups[category]) {
+            groups[category] = [];
+        }
+        groups[category].push(permission);
+    });
+    
+    return Object.entries(groups).map(([category, permissions]) => ({
+        category,
+        permissions,
+        count: permissions.length
+    })).sort((a, b) => a.category.localeCompare(b.category));
 });
 
 onMounted(async () => {
@@ -202,7 +251,7 @@ const loadData = async () => {
         await rolesStore.getAllRoles();
         
         // Get user's current permissions and roles (this also sets userInfo)
-        const data = await rolesStore.getUserPermissions();
+        const data = await rolesStore.getUserRolesAndPermissions(route.params.userUuid as string);
         if (data.user) {
             userInfo.value = data.user;
         }
@@ -231,6 +280,10 @@ const openAssignRoleModal = () => {
 const closeAssignRoleModal = () => {
     showAssignRoleModal.value = false;
     selectedRoleUuid.value = '';
+};
+
+const toggleCategory = (category: string) => {
+    expandedCategories.value[category] = !expandedCategories.value[category];
 };
 
 const assignRole = async () => {

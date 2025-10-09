@@ -33,30 +33,30 @@
                                 <icon-x />
                             </button>
                             <div class="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
-                                {{ setting?.uuid ? 'Edit Setting' : 'Add Setting' }}
+                                {{ app?.uuid ? 'Edit App' : 'Add App' }}
                             </div>
                             <div class="p-5">
                                 <form @submit.prevent="$emit('save', formData)">
                                     <div class="mb-5">
-                                        <label for="key">Key *</label>
-                                        <input 
-                                            id="key" 
-                                            type="text" 
-                                            placeholder="Enter key (e.g., app_name)" 
-                                            class="form-input" 
-                                            v-model="formData.key"
-                                            :disabled="!!setting?.uuid"
+                                        <label for="name">Name *</label>
+                                        <input
+                                            id="name"
+                                            type="text"
+                                            placeholder="Enter app name"
+                                            class="form-input"
+                                            v-model="formData.name"
+                                            required
                                         />
                                     </div>
                                     <div class="mb-5">
-                                        <label for="value">Value *</label>
-                                        <textarea
-                                            id="value"
-                                            rows="3"
-                                            placeholder="Enter value"
-                                            class="form-textarea resize-none min-h-[100px]"
-                                            v-model="formData.value"
-                                        ></textarea>
+                                        <label for="slug">Slug</label>
+                                        <input
+                                            id="slug"
+                                            type="text"
+                                            placeholder="Auto-generated from name"
+                                            class="form-input"
+                                            v-model="formData.slug"
+                                        />
                                     </div>
                                     <div class="mb-5">
                                         <label for="type">Type *</label>
@@ -69,40 +69,36 @@
                                         />
                                     </div>
                                     <div class="mb-5">
-                                        <label for="group">Group *</label>
-                                        <input 
-                                            id="group" 
-                                            type="text" 
-                                            placeholder="Enter group (e.g., general, email)" 
-                                            class="form-input" 
-                                            v-model="formData.group"
-                                            required
+                                        <label for="status">Status *</label>
+                                        <CustomSelect
+                                            :model-value="formData.status"
+                                            :options="statusOptions"
+                                            placeholder="Select Status"
+                                            :allow-empty="false"
+                                            @update:model-value="formData.status = $event"
                                         />
                                     </div>
                                     <div class="mb-5">
                                         <label for="description">Description</label>
                                         <textarea
                                             id="description"
-                                            rows="2"
-                                            placeholder="Enter description"
+                                            rows="3"
+                                            placeholder="Enter app description"
                                             class="form-textarea resize-none min-h-[80px]"
                                             v-model="formData.description"
                                         ></textarea>
                                     </div>
-                                    <div class="mb-5">
-                                        <label class="flex items-center cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                class="form-checkbox" 
-                                                v-model="formData.is_public"
-                                            />
-                                            <span class="text-white-dark ltr:ml-2 rtl:mr-2">Public (visible to frontend)</span>
-                                        </label>
-                                    </div>
                                     <div class="flex justify-end items-center mt-8">
-                                        <button type="button" class="btn btn-outline-danger" @click="$emit('close')">Cancel</button>
-                                        <button type="submit" class="btn btn-primary ltr:ml-4 rtl:mr-4">
-                                            {{ setting?.uuid ? 'Update' : 'Add' }}
+                                        <button type="button" @click="$emit('close')" class="btn btn-outline-danger">
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary ltr:ml-4 rtl:mr-4"
+                                            :disabled="loading"
+                                        >
+                                            <div v-if="loading" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            {{ app?.uuid ? 'Update' : 'Create' }} App
                                         </button>
                                     </div>
                                 </form>
@@ -116,61 +112,86 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 import CustomSelect from './CustomSelect.vue';
-import IconX from './icon/icon-x.vue';
-import type { Setting } from '../stores/settings';
+import type { App } from '../stores/apps';
 
-const props = defineProps<{
+interface Props {
     show: boolean;
-    setting?: Setting | null;
-}>();
+    app?: App | null;
+    loading?: boolean;
+}
 
-const emit = defineEmits<{
+interface Emits {
     (e: 'close'): void;
-    (e: 'save', data: Partial<Setting>): void;
-}>();
+    (e: 'save', data: any): void;
+}
 
-const formData = ref<Partial<Setting>>({
-    key: '',
-    value: '',
-    type: 'string',
-    group: 'general',
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+
+const formData = ref({
+    name: '',
+    slug: '',
+    type: 'web' as 'web' | 'mobile' | 'api',
+    status: 'active' as 'active' | 'inactive' | 'maintenance',
     description: '',
-    is_public: false,
 });
 
-// Select options
 const typeOptions = [
-    { value: 'string', label: 'String' },
-    { value: 'integer', label: 'Integer' },
-    { value: 'float', label: 'Float' },
-    { value: 'boolean', label: 'Boolean' },
-    { value: 'json', label: 'JSON' },
-    { value: 'array', label: 'Array' }
+    { value: 'web', label: 'Web' },
+    { value: 'mobile', label: 'Mobile' },
+    { value: 'api', label: 'API' },
 ];
 
-// Watch for setting changes to update form
-watch(() => props.setting, (newSetting) => {
-    if (newSetting) {
+const statusOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'maintenance', label: 'Maintenance' },
+];
+
+// Auto-generate slug from name
+watch(() => formData.value.name, (newName) => {
+    if (newName) {
+        formData.value.slug = newName.toLowerCase()
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+});
+
+// Watch for app prop changes to populate form
+watch(() => props.app, (newApp) => {
+    if (newApp) {
         formData.value = {
-            ...newSetting,
-            // Convert value to string for textarea
-            value: typeof newSetting.value !== 'string' ? JSON.stringify(newSetting.value) : newSetting.value,
+            name: newApp.name || '',
+            slug: newApp.slug || '',
+            type: newApp.type || 'web',
+            status: newApp.status || 'active',
+            description: newApp.description || '',
         };
     } else {
-        // Reset form
+        // Reset form for new app
         formData.value = {
-            key: '',
-            value: '',
-            type: 'string',
-            group: 'general',
+            name: '',
+            slug: '',
+            type: 'web',
+            status: 'active',
             description: '',
-            is_public: false,
         };
     }
 }, { immediate: true });
+</script>
+
+<script lang="ts">
+import IconX from '../components/icon/icon-x.vue';
+
+export default {
+    components: {
+        IconX,
+    },
+};
 </script>
 
 <style scoped>

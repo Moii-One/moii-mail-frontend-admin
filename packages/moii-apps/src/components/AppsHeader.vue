@@ -3,16 +3,12 @@
         <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h5 class="font-semibold text-lg dark:text-white-light">{{ title }}</h5>
-                <p class="text-white-dark text-sm mt-1">Manage users, accounts, and permissions</p>
+                <p class="text-white-dark text-sm mt-1">Manage web and mobile applications</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    @click="$emit('create-user')"
-                >
+                <button type="button" class="btn btn-primary" @click="$emit('add')">
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Create User
+                    Add App
                 </button>
                 <button
                     type="button"
@@ -29,14 +25,14 @@
         <!-- Filters Accordion -->
         <vue-collapsible :isOpen="showFilters">
             <div class="panel p-4 space-y-4 mb-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Search -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Search</label>
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search users..."
+                                placeholder="Search by name or slug..."
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 :value="modelValue.search"
                                 @input="updateFilter('search', ($event.target as HTMLInputElement).value)"
@@ -47,137 +43,118 @@
                         </div>
                     </div>
 
+                    <!-- Type Filter -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Type</label>
+                        <CustomSelect
+                            :model-value="modelValue.type"
+                            :options="typeOptions"
+                            placeholder="All Types"
+                            @update:model-value="updateFilter('type', $event)"
+                        />
+                    </div>
+
                     <!-- Status Filter -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Status</label>
                         <CustomSelect
                             :model-value="modelValue.status"
                             :options="statusOptions"
-                            placeholder="All Status"
+                            placeholder="All Statuses"
                             @update:model-value="updateFilter('status', $event)"
-                        />
-                    </div>
-
-                    <!-- Company Filter -->
-                    <div>
-                        <label class="text-sm font-semibold mb-2 block">Company</label>
-                        <CustomSelect
-                            :model-value="modelValue.company"
-                            :options="companyOptions"
-                            placeholder="All Companies"
-                            @update:model-value="updateFilter('company', $event)"
-                        />
-                    </div>
-
-                    <!-- Locked Filter -->
-                    <div>
-                        <label class="text-sm font-semibold mb-2 block">Account Status</label>
-                        <CustomSelect
-                            :model-value="modelValue.locked"
-                            :options="lockedOptions"
-                            placeholder="All Accounts"
-                            @update:model-value="updateFilter('locked', $event)"
                         />
                     </div>
                 </div>
 
                 <!-- Clear Filters -->
                 <div class="flex items-center justify-end">
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         class="btn btn-outline-warning"
                         @click="clearFilters"
                     >
-                        <icon-refresh class="ltr:mr-2 rtl:ml-2" />
+                        <icon-x class="ltr:mr-2 rtl:ml-2" />
                         Clear Filters
                     </button>
                 </div>
+
             </div>
         </vue-collapsible>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { ref, computed } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
-import { useUsersStore } from '../stores/users';
 import CustomSelect from './CustomSelect.vue';
-import IconPlus from '../components/icon/icon-plus.vue';
-import IconMenu from '../components/icon/icon-menu.vue';
-import IconCaretDown from '../components/icon/icon-caret-down.vue';
-import IconSearch from '../components/icon/icon-search.vue';
-import IconRefresh from '../components/icon/icon-refresh.vue';
-
-export interface UserFilterModel {
-    search: string;
-    status: string;
-    company: string;
-    locked: string;
-}
 
 interface Props {
     title: string;
-    modelValue: UserFilterModel;
+    modelValue: {
+        search: string;
+        type: string;
+        status: string;
+    };
 }
 
 interface Emits {
-    (e: 'update:modelValue', value: UserFilterModel): void;
-    (e: 'create-user'): void;
+    (e: 'update:modelValue', value: Props['modelValue']): void;
+    (e: 'add'): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const usersStore = useUsersStore();
 const showFilters = ref(false);
 
-const updateFilter = (key: keyof UserFilterModel, value: string) => {
+const typeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'web', label: 'Web' },
+    { value: 'mobile', label: 'Mobile' },
+    { value: 'api', label: 'API' },
+];
+
+const statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'maintenance', label: 'Maintenance' },
+];
+
+const updateFilter = (key: keyof Props['modelValue'], value: string) => {
     emit('update:modelValue', {
         ...props.modelValue,
-        [key]: value
+        [key]: value,
     });
 };
 
 const clearFilters = () => {
     emit('update:modelValue', {
         search: '',
+        type: '',
         status: '',
-        company: '',
-        locked: ''
     });
 };
+</script>
 
-// Select options
-const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'suspended', label: 'Suspended' }
-];
+<script lang="ts">
+import IconPlus from '../components/icon/icon-plus.vue';
+import IconMenu from '../components/icon/icon-menu.vue';
+import IconCaretDown from '../components/icon/icon-caret-down.vue';
+import IconRefresh from '../components/icon/icon-refresh.vue';
+import IconSearch from '../components/icon/icon-search.vue';
+import IconX from '../components/icon/icon-x.vue';
 
-const lockedOptions = [
-    { value: '', label: 'All Accounts' },
-    { value: 'false', label: 'Unlocked' },
-    { value: 'true', label: 'Locked' }
-];
-
-// Get unique companies from users
-const availableCompanies = computed(() => {
-    const companies = new Set(
-        usersStore.users
-            .map(user => user.company)
-            .filter(company => company && company.trim() !== '')
-    );
-    return Array.from(companies).sort();
-});
-
-const companyOptions = computed(() => [
-    { value: '', label: 'All Companies' },
-    ...availableCompanies.value.map(company => ({
-        value: company,
-        label: company
-    }))
-]);
+export default {
+    components: {
+        IconPlus,
+        IconMenu,
+        IconCaretDown,
+        IconRefresh,
+        IconSearch,
+        IconX,
+    },
+};
 </script>
 
 <style scoped>

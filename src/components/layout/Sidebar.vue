@@ -66,6 +66,17 @@
                         <li class="nav-item">
                             <ul>
                                 <li class="nav-item">
+                                    <router-link to="/apps" class="group" @click="toggleMobileMenu">
+                                        <div class="flex items-center">
+                                            <IconApps class="group-hover:!text-primary shrink-0" />
+
+                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{{
+                                                $t('apps_management')
+                                            }}</span>
+                                        </div>
+                                    </router-link>
+                                </li>
+                                <li class="nav-item">
                                     <router-link to="/apps/chat" class="group" @click="toggleMobileMenu">
                                         <div class="flex items-center">
                                             <icon-menu-chat class="group-hover:!text-primary shrink-0" />
@@ -821,6 +832,7 @@
     import IconUsers from '../../../packages/moii-users/src/components/icon/icon-users.vue';
     import IconShieldCheck from '../../../packages/moii-users/src/components/icon/icon-shield-check.vue';
     import IconKey from '../../../packages/moii-users/src/components/icon/icon-key.vue';
+    import IconApps from '../../../packages/moii-apps/src/components/icon/icon-apps.vue';
 
     const store = useAppStore();
     const activeDropdown: any = ref('');

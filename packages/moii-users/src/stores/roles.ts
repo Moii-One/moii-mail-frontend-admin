@@ -516,6 +516,38 @@ export const useRolesStore = defineStore('roles', () => {
         }
     }
 
+    // Get specific user's roles and permissions
+    async function getUserRolesAndPermissions(userUuid: string) {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await fetch(`${API_URL}/users/${userUuid}/roles`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorData.message_code || errorMessage;
+                } catch (e) {
+                    // If we can't parse the error response, use the default message
+                }
+                throw new Error(errorMessage);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error fetching user roles and permissions:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     function clearError() {
         error.value = null;
     }
@@ -543,6 +575,7 @@ export const useRolesStore = defineStore('roles', () => {
         assignRolesToUser,
         unassignRolesFromUser,
         getUserPermissions,
+        getUserRolesAndPermissions,
         clearError
     };
 });
