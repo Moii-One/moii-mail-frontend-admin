@@ -20,6 +20,36 @@ const routes: RouteRecordRaw[] = [
             requiresAuth: true,
             permissions: ['users.view']
         }
+    },
+    {
+        path: '/users/:userUuid/roles',
+        name: 'user-roles',
+        component: () => import('../views/UserRolesList.vue'),
+        meta: {
+            title: 'User Roles & Permissions',
+            requiresAuth: true,
+            permissions: ['users.view', 'roles.view']
+        }
+    },
+    {
+        path: '/roles',
+        name: 'roles',
+        component: () => import('../views/RolesList.vue'),
+        meta: {
+            title: 'Roles Management',
+            requiresAuth: true,
+            permissions: ['roles.view']
+        }
+    },
+    {
+        path: '/permissions',
+        name: 'permissions',
+        component: () => import('../views/PermissionsList.vue'),
+        meta: {
+            title: 'Permissions Management',
+            requiresAuth: true,
+            permissions: ['permissions.view']
+        }
     }
 ];
 

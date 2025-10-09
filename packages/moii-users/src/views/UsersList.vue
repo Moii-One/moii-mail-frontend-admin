@@ -220,6 +220,16 @@
                                             </li>
                                             <li>
                                                 <button
+                                                    class="w-full text-left"
+                                                    @click="manageUserRoles(data.value)"
+                                                    :disabled="usersStore.loading"
+                                                >
+                                                    <icon-shield-check class="w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                    Manage Roles
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
                                                     class="w-full text-left text-danger"
                                                     @click="terminateUserSessions(data.value)"
                                                     :disabled="usersStore.loading"
@@ -281,6 +291,7 @@ import IconPlay from '../components/icon/icon-play.vue';
 import IconUnlock from '../components/icon/icon-unlock.vue';
 import IconRefresh from '../components/icon/icon-refresh.vue';
 import IconShield from '../components/icon/icon-shield.vue';
+import IconShieldCheck from '../components/icon/icon-shield-check.vue';
 import IconLogout from '../components/icon/icon-logout.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
 import IconMonitor from '../components/icon/icon-monitor.vue';
@@ -649,6 +660,10 @@ const manageUser2FA = async (user: User) => {
 
 const viewUserSessions = (user: User) => {
     router.push(`/users/${user.uuid}/sessions`);
+};
+
+const manageUserRoles = (user: User) => {
+    router.push(`/users/${user.uuid}/roles`);
 };
 
 const terminateUserSessions = async (user: User) => {
