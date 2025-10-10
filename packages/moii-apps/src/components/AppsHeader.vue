@@ -111,7 +111,7 @@ const typeOptions = [
     { value: '', label: 'All Types' },
     { value: 'web', label: 'Web' },
     { value: 'mobile', label: 'Mobile' },
-    { value: 'api', label: 'API' },
+    { value: 'web-mobile', label: 'Web/Mobile' },
 ];
 
 const statusOptions = [

@@ -14,6 +14,19 @@ export interface App {
     config?: Record<string, any> | null;
     created_at?: string;
     updated_at?: string;
+    tenants?: Tenant[];
+}
+
+export interface Tenant {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    status: 'active' | 'inactive' | 'blocked';
+    config?: Record<string, any> | null;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export const useAppsStore = defineStore('apps', () => {
@@ -24,6 +37,7 @@ export const useAppsStore = defineStore('apps', () => {
     const apps = ref<App[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const tenants = ref<Tenant[]>([]);
 
     // Getters
     const activeApps = computed(() =>
@@ -268,13 +282,13 @@ export const useAppsStore = defineStore('apps', () => {
         error.value = null;
 
         try {
-            const response = await fetch(`${API_URL}/${uuid}`, {
-                method: 'GET',
+            const response = await fetch(`${API_URL}${uuid}`, {
                 headers: getAuthHeaders(),
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
@@ -282,11 +296,71 @@ export const useAppsStore = defineStore('apps', () => {
             if (data.success) {
                 return data.data;
             } else {
-                throw new Error(data.message || 'Failed to fetch app');
+                throw new Error(data.message || 'Failed to get app');
             }
         } catch (err: any) {
             error.value = err.message;
-            console.error('Error fetching app:', err);
+            console.error('Error getting app:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const attachTenant = async (appUuid: string, tenantUuid: string) => {
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await fetch(`${API_URL}${appUuid}/attach-tenant`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ tenant_uuid: tenantUuid }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to attach tenant');
+            }
+        } catch (err: any) {
+            error.value = err.message;
+            console.error('Error attaching tenant:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const detachTenant = async (appUuid: string, tenantUuid: string) => {
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await fetch(`${API_URL}${appUuid}/detach-tenant`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ tenant_uuid: tenantUuid }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to detach tenant');
+            }
+        } catch (err: any) {
+            error.value = err.message;
+            console.error('Error detaching tenant:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -298,11 +372,36 @@ export const useAppsStore = defineStore('apps', () => {
         error.value = null;
     };
 
+    // Fetch tenants
+    const fetchTenants = async () => {
+        try {
+            const response = await fetch(`${API_URL}api/tenants`, {
+                headers: getAuthHeaders(),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                tenants.value = data.data;
+            } else {
+                throw new Error(data.message || 'Failed to fetch tenants');
+            }
+        } catch (err: any) {
+            console.error('Error fetching tenants:', err);
+            throw err;
+        }
+    };
+
     return {
         // State
         apps,
         loading,
         error,
+        tenants,
 
         // Getters
         activeApps,
@@ -319,5 +418,8 @@ export const useAppsStore = defineStore('apps', () => {
         deleteApp,
         getApp,
         clearError,
+        fetchTenants,
+        attachTenant,
+        detachTenant,
     };
 });

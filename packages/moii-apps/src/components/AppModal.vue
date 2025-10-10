@@ -79,6 +79,18 @@
                                         />
                                     </div>
                                     <div class="mb-5">
+                                        <label for="tenant">Tenant *</label>
+                                        <CustomSelect
+                                            id="tenant"
+                                            :model-value="formData.tenant_uuids"
+                                            :options="tenantOptions"
+                                            placeholder="Select Tenant"
+                                            :allow-empty="false"
+                                            multiple
+                                            @update:model-value="formData.tenant_uuids = $event"
+                                        />
+                                    </div>
+                                    <div class="mb-5">
                                         <label for="description">Description</label>
                                         <textarea
                                             id="description"
@@ -87,6 +99,16 @@
                                             class="form-textarea resize-none min-h-[80px]"
                                             v-model="formData.description"
                                         ></textarea>
+                                    </div>
+                                    <div class="mb-5">
+                                        <label for="tenants">Tenants</label>
+                                        <CustomSelect
+                                            :model-value="formData.tenant_uuids"
+                                            :options="tenantOptions"
+                                            placeholder="Select tenants"
+                                            :multiple="true"
+                                            @update:model-value="formData.tenant_uuids = $event"
+                                        />
                                     </div>
                                     <div class="flex justify-end items-center mt-8">
                                         <button type="button" @click="$emit('close')" class="btn btn-outline-danger">
@@ -112,10 +134,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 import CustomSelect from './CustomSelect.vue';
-import type { App } from '../stores/apps';
+import { useAppsStore } from '../stores/apps';
+import type { App, Tenant } from '../stores/apps';
 
 interface Props {
     show: boolean;
@@ -131,18 +154,21 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const appsStore = useAppsStore();
+
 const formData = ref({
     name: '',
     slug: '',
     type: 'web' as 'web' | 'mobile' | 'api',
     status: 'active' as 'active' | 'inactive' | 'maintenance',
     description: '',
+    tenant_uuids: [] as string[],
 });
 
 const typeOptions = [
     { value: 'web', label: 'Web' },
     { value: 'mobile', label: 'Mobile' },
-    { value: 'api', label: 'API' },
+    { value: 'web-mobile', label: 'Web/Mobile' },
 ];
 
 const statusOptions = [
@@ -150,6 +176,13 @@ const statusOptions = [
     { value: 'inactive', label: 'Inactive' },
     { value: 'maintenance', label: 'Maintenance' },
 ];
+
+const tenantOptions = computed(() => 
+    appsStore.tenants.map(tenant => ({
+        value: tenant.uuid,
+        label: tenant.name,
+    }))
+);
 
 // Auto-generate slug from name
 watch(() => formData.value.name, (newName) => {
@@ -170,6 +203,7 @@ watch(() => props.app, (newApp) => {
             type: newApp.type || 'web',
             status: newApp.status || 'active',
             description: newApp.description || '',
+            tenant_uuids: newApp.tenants?.map(t => t.uuid) || [],
         };
     } else {
         // Reset form for new app
@@ -179,9 +213,21 @@ watch(() => props.app, (newApp) => {
             type: 'web',
             status: 'active',
             description: '',
+            tenant_uuids: [],
         };
     }
 }, { immediate: true });
+
+// Fetch tenants on mount
+onMounted(async () => {
+    if (appsStore.tenants.length === 0) {
+        try {
+            await appsStore.fetchTenants();
+        } catch (error) {
+            console.error('Failed to fetch tenants:', error);
+        }
+    }
+});
 </script>
 
 <script lang="ts">

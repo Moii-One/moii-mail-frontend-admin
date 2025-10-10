@@ -117,6 +117,15 @@
                             </button>
                             <button
                                 type="button"
+                                class="btn btn-outline-info btn-sm"
+                                @click="duplicateApp(data.value)"
+                                :disabled="appsStore.loading"
+                                title="Duplicate app"
+                            >
+                                <icon-copy class="w-3 h-3" />
+                            </button>
+                            <button
+                                type="button"
                                 class="btn btn-outline-danger btn-sm"
                                 @click="deleteApp(data.value)"
                                 :disabled="appsStore.loading"
@@ -216,7 +225,7 @@ const getTypeBadgeClass = (type: string) => {
     switch (type) {
         case 'web': return 'badge-outline-info';
         case 'mobile': return 'badge-outline-warning';
-        case 'api': return 'badge-outline-success';
+        case 'web/mobile': return 'badge-outline-success';
         default: return 'badge-outline-dark';
     }
 };
@@ -283,13 +292,37 @@ const closeModal = () => {
 
 const handleSaveApp = async (appData: any) => {
     try {
-        if (selectedApp.value) {
+        let appUuid;
+        if (selectedApp.value?.uuid) {
             await appsStore.updateApp(selectedApp.value.uuid, appData);
+            appUuid = selectedApp.value.uuid;
             showMessage('App updated successfully.');
         } else {
-            await appsStore.createApp(appData);
+            const app = await appsStore.createApp(appData);
+            appUuid = app.uuid;
             showMessage('App created successfully.');
         }
+
+        // Handle tenant attachments
+        if (appData.tenant_uuids && appUuid) {
+            // Fetch the current app with tenants
+            const currentApp = await appsStore.getApp(appUuid);
+            const currentTenantUuids = currentApp.tenants?.map(t => t.uuid) || [];
+
+            // Detach removed tenants
+            const toDetach = currentTenantUuids.filter(uuid => !appData.tenant_uuids.includes(uuid));
+            for (const tenantUuid of toDetach) {
+                await appsStore.detachTenant(appUuid, tenantUuid);
+            }
+
+            // Attach new tenants
+            const toAttach = appData.tenant_uuids.filter(uuid => !currentTenantUuids.includes(uuid));
+            for (const tenantUuid of toAttach) {
+                await appsStore.attachTenant(appUuid, tenantUuid);
+            }
+        }
+
+        await appsStore.fetchApps(); // Refresh the list
         closeModal();
     } catch (error: any) {
         console.error('Error saving app:', error);
@@ -320,6 +353,23 @@ const deleteApp = async (app: any) => {
     }
 };
 
+const duplicateApp = (app: any) => {
+    // Create a duplicate object with modified name and slug
+    const duplicateData = {
+        ...app,
+        name: app.name + ' (Copy)',
+        slug: app.slug + '_copy',
+        uuid: null, // Clear UUID so it's treated as new
+        id: null, // Clear ID so it's treated as new
+        created_at: null, // Clear timestamps
+        updated_at: null,
+    };
+
+    // Set the selected app to the duplicate data
+    selectedApp.value = duplicateData;
+    showModal.value = true;
+};
+
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = Swal.mixin({
         toast: true,
@@ -339,11 +389,13 @@ const showMessage = (message: string, type: 'success' | 'error' = 'success') => 
 <script lang="ts">
 import IconEdit from '../components/icon/icon-edit.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
+import IconCopy from '../components/icon/icon-copy.vue';
 
 export default {
     components: {
         IconEdit,
         IconTrash,
+        IconCopy,
     },
 };
 </script>

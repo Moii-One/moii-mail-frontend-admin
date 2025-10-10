@@ -8,6 +8,7 @@ import localizationsRoutes from '../../packages/moii-localizations/src/router';
 import rateLimitsRoutes from '../../packages/moii-limiter/src/router';
 import userRoutes from '../../packages/moii-users/src/router';
 import appsRoutes from '../../packages/moii-apps/src/router';
+import tenantsRoutes from '../../packages/moii-tenants/src/router';
 import { requiresAuth, isAuthenticated, getLoginRedirect } from '../../packages/moii-auth/src/composables/useAuth';
 import { requiresAuth as exampleRequiresAuth } from '../../packages/moii-example/src/composables/useAuth';
 import { requiresAuth as settingsRequiresAuth } from '../../packages/moii-settings/src/composables/useAuth';
@@ -15,7 +16,10 @@ import { requiresAuth as localizationsRequiresAuth } from '../../packages/moii-l
 import { requiresAuth as rateLimitsRequiresAuth } from '../../packages/moii-limiter/src/composables/useAuth';
 import { requiresAuth as usersRequiresAuth } from '../../packages/moii-users/src/composables/useAuth';
 import { requiresAuth as appsRequiresAuth } from '../../packages/moii-apps/src/composables/useAuth';
+import { requiresAuth as tenantsRequiresAuth } from '../../packages/moii-tenants/src/composables/useAuth';
 import HomeView from '../views/index.vue';
+import reviewRoutes from '../../packages/moii-reviews/src/router';
+import notificationsRoutes from '../../packages/moii-notifications/src/router';
 
 const routes: RouteRecordRaw[] = [
     // dashboard
@@ -532,6 +536,15 @@ const routes: RouteRecordRaw[] = [
 
     // apps (requires authentication)
     ...appsRoutes,
+
+    // tenants (requires authentication)
+    ...tenantsRoutes,
+
+    // reviews (requires authentication)
+    ...reviewRoutes,
+
+    // notifications (requires authentication)
+    ...notificationsRoutes,
 ];
 
 const router = createRouter({
@@ -558,7 +571,7 @@ router.beforeEach((to, from, next) => {
     }
 
     // Check if route requires authentication
-    if (requiresAuth(to) || exampleRequiresAuth(to) || localizationsRequiresAuth(to) || settingsRequiresAuth(to) || rateLimitsRequiresAuth(to) || usersRequiresAuth(to) || appsRequiresAuth(to)) {
+    if (requiresAuth(to) || exampleRequiresAuth(to) || localizationsRequiresAuth(to) || settingsRequiresAuth(to) || rateLimitsRequiresAuth(to) || usersRequiresAuth(to) || appsRequiresAuth(to) || tenantsRequiresAuth(to)) {
         if (!isAuthenticated()) {
             // User not authenticated, redirect to login
             const loginPath = getLoginRedirect(to);

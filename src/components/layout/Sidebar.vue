@@ -66,17 +66,6 @@
                         <li class="nav-item">
                             <ul>
                                 <li class="nav-item">
-                                    <router-link to="/apps" class="group" @click="toggleMobileMenu">
-                                        <div class="flex items-center">
-                                            <IconApps class="group-hover:!text-primary shrink-0" />
-
-                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{{
-                                                $t('apps_management')
-                                            }}</span>
-                                        </div>
-                                    </router-link>
-                                </li>
-                                <li class="nav-item">
                                     <router-link to="/apps/chat" class="group" @click="toggleMobileMenu">
                                         <div class="flex items-center">
                                             <icon-menu-chat class="group-hover:!text-primary shrink-0" />
@@ -774,6 +763,42 @@
                             </router-link>
                         </li>
 
+                        <li class="menu nav-item">
+                            <router-link to="/apps" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconApps class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Apps</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item">
+                            <router-link to="/reviews" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconMessage class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Reviews</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item">
+                            <router-link to="/notifications" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconBell class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Notifications</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item">
+                            <router-link to="/tenants" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconUsers class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Tenants</span>
+                                </div>
+                            </router-link>
+                        </li>
+
                         <h2 class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                             <icon-minus class="w-4 h-5 flex-none hidden" />
                             <span>{{ $t('supports') }}</span>
@@ -829,10 +854,12 @@
     import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication.vue';
     import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation.vue';
     import IconShield from '../../../packages/moii-limiter/src/components/icon/icon-shield.vue';
-    import IconUsers from '../../../packages/moii-users/src/components/icon/icon-users.vue';
+    import IconUsers from '../../../packages/moii-tenants/src/components/icon/icon-users.vue';
     import IconShieldCheck from '../../../packages/moii-users/src/components/icon/icon-shield-check.vue';
     import IconKey from '../../../packages/moii-users/src/components/icon/icon-key.vue';
     import IconApps from '../../../packages/moii-apps/src/components/icon/icon-apps.vue';
+    import IconMessage from '../../../packages/moii-reviews/src/components/icon/icon-message.vue';
+    import IconBell from '../../../packages/moii-notifications/src/components/icon/icon-bell.vue';
 
     const store = useAppStore();
     const activeDropdown: any = ref('');
