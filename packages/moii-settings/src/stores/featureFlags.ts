@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface FeatureFlag {
@@ -14,7 +15,8 @@ export interface FeatureFlag {
 
 export const useFeatureFlagsStore = defineStore('featureFlags', () => {
     const authStore = useAuthStore();
-    const API_URL = `${config.api_url}/features`;
+    // Use the dedicated /api/features endpoint (remove /settings from path)
+    const API_URL = `${config.api_url.replace('/api/settings', '/api/features')}`;
 
     // State
     const features = ref<Record<string, any>>({});
@@ -47,9 +49,8 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
             'Content-Type': 'application/json',
         };
 
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
-        }
+        const shared = sharedGetAuthHeaders();
+        if (shared['Authorization']) headers['Authorization'] = shared['Authorization'];
 
         return headers;
     };
@@ -59,8 +60,8 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            // Get all settings and filter features on frontend
-            const response = await fetch(`${config.api_url}`, {
+            // Use the dedicated features endpoint
+            const response = await fetch(`${API_URL}`, {
                 headers: getAuthHeaders()
             });
 
@@ -77,17 +78,15 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
             const result = await response.json();
             
             if (result.data) {
-                // Filter and transform feature settings
+                // Transform feature settings from moii-features API
                 const featureSettings: Record<string, any> = {};
                 
                 result.data.forEach((setting: any) => {
-                    if (setting.group === 'features' && setting.key.startsWith('feature.')) {
-                        featureSettings[setting.key] = {
-                            enabled: setting.value,
-                            description: setting.description || `Feature flag: ${setting.key}`,
-                            uuid: setting.uuid
-                        };
-                    }
+                    featureSettings[setting.key] = {
+                        enabled: setting.enabled,
+                        description: setting.description || `Feature flag: ${setting.key}`,
+                        uuid: setting.uuid
+                    };
                 });
                 
                 features.value = featureSettings;
@@ -105,7 +104,10 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${featureName}/enable`, {
+            // Remove feature. prefix if present since the API will handle it
+            const key = featureName.replace(/^feature\./, '');
+            
+            const response = await fetch(`${API_URL}/${key}/enable`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
             });
@@ -135,7 +137,10 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${featureName}/disable`, {
+            // Remove feature. prefix if present since the API will handle it
+            const key = featureName.replace(/^feature\./, '');
+            
+            const response = await fetch(`${API_URL}/${key}/disable`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
             });
@@ -165,19 +170,17 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            const key = featureName.startsWith('feature.') ? featureName : `feature.${featureName}`;
+            // Remove feature. prefix if present since the API will add it
+            const key = featureName.replace(/^feature\./, '');
             
-            // Use the generic settings create endpoint
-            const response = await fetch(`${config.api_url}`, {
+            // Use the dedicated features create endpoint
+            const response = await fetch(`${API_URL}`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
                     key: key,
-                    value: enabled,
-                    type: 'boolean',
                     description: description,
-                    group: 'features',
-                    is_public: false
+                    enabled: enabled
                 })
             });
 
@@ -206,17 +209,16 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            const key = featureName.startsWith('feature.') ? featureName : `feature.${featureName}`;
+            // Remove feature. prefix if present since the API will handle it
+            const key = featureName.replace(/^feature\./, '');
             
-            // Use the generic settings update endpoint
-            const response = await fetch(`${config.api_url}/${key}`, {
+            // Use the dedicated features update endpoint
+            const response = await fetch(`${API_URL}/${key}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    value: enabled !== undefined ? enabled : features.value[key]?.enabled || false,
-                    type: 'boolean',
                     description: description,
-                    group: 'features'
+                    ...(enabled !== undefined && { enabled })
                 })
             });
 
@@ -245,12 +247,13 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
         loading.value = true;
         error.value = null;
         try {
-            const key = featureName.startsWith('feature.') ? featureName : `feature.${featureName}`;
+            // Remove feature. prefix if present since the API will handle it
+            const key = featureName.replace(/^feature\./, '');
             
-            // Use the generic settings delete endpoint
-            const response = await fetch(`${config.api_url}/${key}`, {
+            // Use the dedicated features delete endpoint
+            const response = await fetch(`${API_URL}/${key}`, {
                 method: 'DELETE',
-                headers: getAuthHeaders(),
+                headers: getAuthHeaders()
             });
 
             if (!response.ok) {

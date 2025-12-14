@@ -1,10 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface Notification {
     id: number;
+    uuid: string;
     title: string;
     content: string;
     excerpt?: string;
@@ -32,6 +35,7 @@ export interface Notification {
 
 export interface NotificationList {
     id: number;
+    uuid: string;
     name: string;
     description?: string;
     filters?: any;
@@ -182,10 +186,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
             });
 
             const response = await fetch(`${API_URL}?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data: any = await response.json();
@@ -209,14 +210,11 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function fetchNotification(id: number) {
+    async function fetchNotification(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+            const response = await fetch(`${API_URL}/${uuid}`, {
+                headers: sharedGetAuthHeaders(),
             });
 
             const data: any = await response.json();
@@ -239,11 +237,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify(notificationData),
             });
 
@@ -262,27 +256,23 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function updateNotification(id: number, notificationData: UpdateNotificationData) {
+    async function updateNotification(uuid: string, notificationData: UpdateNotificationData) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify(notificationData),
             });
 
             const data: any = await response.json();
 
             if (data.success && data.data) {
-                const index = notifications.value.findIndex(n => n.id === id);
+                const index = notifications.value.findIndex(n => n.uuid === uuid);
                 if (index !== -1) {
                     notifications.value[index] = data.data;
                 }
-                if (currentNotification.value?.id === id) {
+                if (currentNotification.value?.uuid === uuid) {
                     currentNotification.value = data.data;
                 }
             }
@@ -296,21 +286,18 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function deleteNotification(id: number) {
+    async function deleteNotification(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                notifications.value = notifications.value.filter(n => n.id !== id);
+                notifications.value = notifications.value.filter(n => n.uuid !== uuid);
             }
 
             return data;
@@ -322,21 +309,18 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function sendNotification(id: number) {
+    async function sendNotification(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}/send`, {
+            const response = await fetch(`${API_URL}/${uuid}/send`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await fetchNotification(id);
+                await fetchNotification(uuid);
             }
 
             return data;
@@ -348,23 +332,19 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function scheduleNotification(id: number, scheduledAt: string) {
+    async function scheduleNotification(uuid: string, scheduledAt: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}/schedule`, {
+            const response = await fetch(`${API_URL}/${uuid}/schedule`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify({ scheduled_at: scheduledAt }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await fetchNotification(id);
+                await fetchNotification(uuid);
             }
 
             return data;
@@ -376,21 +356,18 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function cancelNotification(id: number) {
+    async function cancelNotification(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/${id}/cancel`, {
+            const response = await fetch(`${API_URL}/${uuid}/cancel`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await fetchNotification(id);
+                await fetchNotification(uuid);
             }
 
             return data;
@@ -405,10 +382,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     async function fetchStatistics() {
         try {
             const response = await fetch(`${API_URL}/statistics`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
@@ -435,10 +409,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
             });
 
             const response = await fetch(`${API_URL}/lists?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data: any = await response.json();
@@ -456,20 +427,17 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function fetchList(id: number) {
+    async function fetchList(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/lists/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+            const response = await fetch(`${API_URL}/lists/${uuid}`, {
+                headers: sharedGetAuthHeaders(),
             });
 
             const data: any = await response.json();
 
             if (data.success && data.data) {
-                const index = lists.value.findIndex(l => l.id === id);
+                const index = lists.value.findIndex(l => l.uuid === uuid);
                 if (index !== -1) {
                     lists.value[index] = data.data;
                 }
@@ -489,11 +457,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
         try {
             const response = await fetch(`${API_URL}/lists`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify(listData),
             });
 
@@ -512,23 +476,19 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function updateList(id: number, listData: any) {
+    async function updateList(uuid: string, listData: any) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/lists/${id}`, {
+            const response = await fetch(`${API_URL}/lists/${uuid}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify(listData),
             });
 
             const data: any = await response.json();
 
             if (data.success && data.data) {
-                const index = lists.value.findIndex(l => l.id === id);
+                const index = lists.value.findIndex(l => l.uuid === uuid);
                 if (index !== -1) {
                     lists.value[index] = data.data;
                 }
@@ -543,21 +503,18 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function deleteList(id: number) {
+    async function deleteList(uuid: string) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/lists/${id}`, {
+            const response = await fetch(`${API_URL}/lists/${uuid}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                lists.value = lists.value.filter(l => l.id !== id);
+                lists.value = lists.value.filter(l => l.uuid !== uuid);
             }
 
             return data;
@@ -569,13 +526,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function fetchListUsers(id: number) {
+    async function fetchListUsers(uuid: string) {
         try {
-            const response = await fetch(`${API_URL}/lists/${id}/users`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+            const response = await fetch(`${API_URL}/lists/${uuid}/users`, {
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();
@@ -587,23 +541,19 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function addUsersToList(id: number, userIds: string[]) {
+    async function addUsersToList(uuid: string, userIds: string[]) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/lists/${id}/users`, {
+            const response = await fetch(`${API_URL}/lists/${uuid}/users`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify({ user_ids: userIds }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await fetchList(id);
+                await fetchList(uuid);
             }
 
             return data;
@@ -615,23 +565,19 @@ export const useNotificationsStore = defineStore('notifications', () => {
         }
     }
 
-    async function removeUsersFromList(id: number, userIds: string[]) {
+    async function removeUsersFromList(uuid: string, userIds: string[]) {
         loading.value = true;
         try {
-            const response = await fetch(`${API_URL}/lists/${id}/users`, {
+            const response = await fetch(`${API_URL}/lists/${uuid}/users`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
                 body: JSON.stringify({ user_ids: userIds }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await fetchList(id);
+                await fetchList(uuid);
             }
 
             return data;
@@ -654,10 +600,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
             });
 
             const response = await fetch(`${API_URL}/deliveries?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data: any = await response.json();
@@ -678,10 +621,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     async function fetchDeliveryStatistics(notificationId: number) {
         try {
             const response = await fetch(`${API_URL}/deliveries/${notificationId}/statistics`, {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Accept': 'application/json',
-                },
+                headers: sharedGetAuthHeaders(),
             });
 
             const data = await response.json();

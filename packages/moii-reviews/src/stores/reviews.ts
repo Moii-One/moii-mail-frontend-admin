@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface Review {
@@ -93,9 +94,8 @@ export const useReviewsStore = defineStore('reviews', () => {
             'Content-Type': 'application/json',
         };
 
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
-        }
+        const shared = sharedGetAuthHeaders();
+        if (shared['Authorization']) headers['Authorization'] = shared['Authorization'];
 
         return headers;
     };

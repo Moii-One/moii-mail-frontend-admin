@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getAuthHeaders as sharedGetAuthHeaders } from '../utils/http';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
   const isLoading = ref(false)
   const error = ref('')
-  const user = ref<any>(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null)
+  const user = ref<any>(null)
   const _storedToken = localStorage.getItem('token') || ''
   const token = ref(_storedToken === 'undefined' ? '' : _storedToken)
 
@@ -108,10 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
         const config = (window as any).config.packages['moii-auth']
         await fetch(`${config.api_url}/logout`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token.value}`
-          },
+          headers: sharedGetAuthHeaders(),
         })
       } catch (err) {
         console.warn('Failed to notify server of logout:', err)
@@ -277,10 +275,7 @@ export const useAuthStore = defineStore('auth', () => {
       const config = (window as any).config.packages['moii-auth']
       const response = await fetch(`${config.api_url}/sessions`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
-        },
+        headers: sharedGetAuthHeaders(),
       })
 
       if (response.ok) {
@@ -299,10 +294,7 @@ export const useAuthStore = defineStore('auth', () => {
       const config = (window as any).config.packages['moii-auth']
       const response = await fetch(`${config.api_url}/sessions/${sessionUuid}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
-        },
+        headers: sharedGetAuthHeaders(),
       })
 
       if (response.ok) {
@@ -320,10 +312,7 @@ export const useAuthStore = defineStore('auth', () => {
       const config = (window as any).config.packages['moii-auth']
       const response = await fetch(`${config.api_url}/sessions/terminate-others`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
-        },
+        headers: sharedGetAuthHeaders(),
       })
 
       if (response.ok) {
@@ -341,10 +330,7 @@ export const useAuthStore = defineStore('auth', () => {
       const config = (window as any).config.packages['moii-auth']
       const response = await fetch(`${config.api_url}/sessions`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
-        },
+        headers: sharedGetAuthHeaders(),
       })
 
       if (response.ok) {
@@ -376,14 +362,10 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await response.json()
 
       if (response.ok) {
-        // Store token and user after successful 2FA verification (accept `access_token` or `token`)
-        const receivedToken = data.access_token ?? data.token ?? ''
-        token.value = receivedToken
-        localStorage.setItem('token', receivedToken)
+        // Store token and user after successful 2FA verification
+        token.value = data.access_token
+        localStorage.setItem('token', data.access_token)
         user.value = data.user
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user))
-        }
         return { success: true, data }
       } else {
         error.value = data.message || 'Invalid 2FA code'

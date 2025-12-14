@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface Role {
@@ -75,9 +76,8 @@ export const useRolesStore = defineStore('roles', () => {
             'Content-Type': 'application/json',
         };
 
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
-        }
+        const shared = sharedGetAuthHeaders();
+        if (shared['Authorization']) headers['Authorization'] = shared['Authorization'];
 
         return headers;
     };

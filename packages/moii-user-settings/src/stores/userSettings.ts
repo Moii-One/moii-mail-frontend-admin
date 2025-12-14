@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface UserSetting {
@@ -30,8 +31,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
             'Content-Type': 'application/json',
         };
 
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
+        // Use centralized helper
+        const shared = sharedGetAuthHeaders();
+        if (shared['Authorization']) {
+            headers['Authorization'] = shared['Authorization'];
         }
 
         return headers;

@@ -1,20 +1,16 @@
-export function getAuthHeaders() {
-  const token = localStorage.getItem('token') || '';
-  // Normalize 'undefined' string
-  const normalized = token === 'undefined' ? '' : token;
+export function getAuthHeaders(additional: Record<string, string> = {}) {
+  const tokenRaw = localStorage.getItem('token') || '';
+  const token = tokenRaw === 'undefined' ? '' : tokenRaw;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...additional,
   };
 
-  if (normalized) {
-    headers['Authorization'] = `Bearer ${normalized}`;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-
-  // Debug: helpful when diagnosing missing token issues in the browser console
-  // (will be removed or gated behind a debug flag in production)
-  // eslint-disable-next-line no-console
-  console.debug('[moii-auth] getAuthHeaders token present:', !!normalized);
 
   return headers;
 }

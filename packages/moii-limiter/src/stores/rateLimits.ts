@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface RateLimitStatus {
@@ -58,15 +59,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
     };
 
     // Helper to get auth headers (centralized)
-    import('../../../moii-auth/src/utils/http').then(mod => {});
-    const getAuthHeaders = () => {
-        // @ts-ignore
-        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
-        const headers = sharedGetAuthHeaders();
-        // eslint-disable-next-line no-console
-        console.debug('[moii-limiter] getAuthHeaders token present:', !!headers['Authorization']);
-        return headers;
-    };
+    const getAuthHeaders = () => sharedGetAuthHeaders();
 
     // Actions
     async function fetchRateLimitStatuses(pkg: string, identifier?: string) {

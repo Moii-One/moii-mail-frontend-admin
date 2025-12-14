@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface Tenant {
@@ -65,15 +66,7 @@ export const useTenantsStore = defineStore('tenants', () => {
     };
 
     // Helper to get auth headers (centralized)
-    import('../../../moii-auth/src/utils/http').then(mod => {});
-    const getAuthHeaders = () => {
-        // @ts-ignore
-        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
-        const headers = sharedGetAuthHeaders();
-        // eslint-disable-next-line no-console
-        console.debug('[moii-tenants] getAuthHeaders token present:', !!headers['Authorization']);
-        return headers;
-    };
+    const getAuthHeaders = () => sharedGetAuthHeaders();
 
     // Actions
     const fetchTenants = async (params: Record<string, any> = {}) => {

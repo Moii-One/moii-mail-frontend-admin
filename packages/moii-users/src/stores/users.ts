@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface User {
@@ -139,19 +140,8 @@ export const useUsersStore = defineStore('users', () => {
     };
 
     // Helper to get auth headers (centralized)
-    import('../../../moii-auth/src/utils/http').then(mod => {
-        // noop - ensures module is preloaded for bundlers
-    });
-
     const getAuthHeaders = () => {
-        // Use the centralized helper so all packages use the same token source
-        // (reading from localStorage ensures we get the latest token regardless of store lifecycle)
-        // @ts-ignore - dynamic import helper returns named export
-        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
-        const headers = sharedGetAuthHeaders();
-        // eslint-disable-next-line no-console
-        console.debug('[moii-users] getAuthHeaders token present:', !!headers['Authorization']);
-        return headers;
+        return sharedGetAuthHeaders();
     };
 
     // Actions

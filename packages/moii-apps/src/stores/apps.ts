@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface App {
@@ -64,15 +65,8 @@ export const useAppsStore = defineStore('apps', () => {
         return apps.value.find(app => app.slug === slug);
     };
 
-    // Helper to get auth headers
-    const getAuthHeaders = () => {
-        const token = authStore.token;
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
-    };
+    // Helper to get auth headers (centralized)
+    const getAuthHeaders = () => sharedGetAuthHeaders();
 
     // Actions
     const fetchApps = async (params: Record<string, any> = {}) => {
@@ -282,7 +276,7 @@ export const useAppsStore = defineStore('apps', () => {
         error.value = null;
 
         try {
-            const response = await fetch(`${API_URL}${uuid}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 headers: getAuthHeaders(),
             });
 
@@ -312,7 +306,7 @@ export const useAppsStore = defineStore('apps', () => {
         error.value = null;
 
         try {
-            const response = await fetch(`${API_URL}${appUuid}/attach-tenant`, {
+            const response = await fetch(`${API_URL}/${appUuid}/attach-tenant`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({ tenant_uuid: tenantUuid }),
@@ -342,7 +336,7 @@ export const useAppsStore = defineStore('apps', () => {
         error.value = null;
 
         try {
-            const response = await fetch(`${API_URL}${appUuid}/detach-tenant`, {
+            const response = await fetch(`${API_URL}/${appUuid}/detach-tenant`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({ tenant_uuid: tenantUuid }),
@@ -375,7 +369,7 @@ export const useAppsStore = defineStore('apps', () => {
     // Fetch tenants
     const fetchTenants = async () => {
         try {
-            const response = await fetch(`${API_URL}api/tenants`, {
+            const response = await fetch(`${config.api_url.replace('/api/apps', '')}/api/tenants`, {
                 headers: getAuthHeaders(),
             });
 

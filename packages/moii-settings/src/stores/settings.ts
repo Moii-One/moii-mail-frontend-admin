@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
+import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface Setting {
@@ -66,7 +67,7 @@ export const useSettingsStore = defineStore('settings', () => {
         error.value = null;
         try {
             const response = await fetch(API_URL, {
-                headers: getAuthHeaders()
+                headers: sharedGetAuthHeaders()
             });
 
             if (!response.ok) {
