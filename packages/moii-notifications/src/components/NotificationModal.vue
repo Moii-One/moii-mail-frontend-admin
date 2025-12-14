@@ -186,7 +186,6 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
         if (props.isEdit && props.notification) {
-            // store expects notification uuid
             await notificationsStore.updateNotification(props.notification.uuid, form as UpdateNotificationData);
         } else {
             await notificationsStore.createNotification(form);

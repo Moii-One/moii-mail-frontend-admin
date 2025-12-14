@@ -276,7 +276,6 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
         if (props.isEdit && props.list) {
-            // store expects list uuid
             await notificationsStore.updateList(props.list.uuid, form);
         } else {
             await notificationsStore.createList(form);
