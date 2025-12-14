@@ -5,8 +5,9 @@ export const useAuthStore = defineStore('auth', () => {
   // State
   const isLoading = ref(false)
   const error = ref('')
-  const user = ref<any>(null)
-  const token = ref(localStorage.getItem('token') || '')
+  const user = ref<any>(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null)
+  const _storedToken = localStorage.getItem('token') || ''
+  const token = ref(_storedToken === 'undefined' ? '' : _storedToken)
 
   // Actions
   const login = async (email: string, password: string) => {
@@ -38,10 +39,14 @@ export const useAuthStore = defineStore('auth', () => {
           }
         }
         
-        // Normal login - store token
-        token.value = data.access_token
-        localStorage.setItem('token', data.access_token)
+        // Normal login - store token (accept both `access_token` and `token` from API)
+        const receivedToken = data.access_token ?? data.token ?? ''
+        token.value = receivedToken
+        localStorage.setItem('token', receivedToken)
         user.value = data.user
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
         return { success: true, data }
       } else {
         const errorData = await response.json().catch(() => ({}))
@@ -73,11 +78,15 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await response.json()
 
       if (response.ok) {
-        // Optionally store token if auto-login
-        if (data.access_token) {
-          token.value = data.access_token
-          localStorage.setItem('token', data.access_token)
+        // Optionally store token if auto-login (accept `access_token` or `token`)
+        const receivedToken = data.access_token ?? data.token ?? ''
+        if (receivedToken) {
+          token.value = receivedToken
+          localStorage.setItem('token', receivedToken)
           user.value = data.user
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user))
+          }
         }
         return { success: true, data }
       } else {
@@ -178,11 +187,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (response.ok) {
         const data = await response.json()
-        // Store temporary access token and user data
-        token.value = data.access_token
+        // Store temporary access token and user data (accept `access_token` or `token`)
+        const receivedToken = data.access_token ?? data.token ?? ''
+        token.value = receivedToken
         user.value = data.user
-        localStorage.setItem('token', data.access_token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('token', receivedToken)
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
         localStorage.removeItem('tempEmail')
         localStorage.removeItem('verificationUuid')
         
@@ -364,10 +376,14 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await response.json()
 
       if (response.ok) {
-        // Store token and user after successful 2FA verification
-        token.value = data.access_token
-        localStorage.setItem('token', data.access_token)
+        // Store token and user after successful 2FA verification (accept `access_token` or `token`)
+        const receivedToken = data.access_token ?? data.token ?? ''
+        token.value = receivedToken
+        localStorage.setItem('token', receivedToken)
         user.value = data.user
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
         return { success: true, data }
       } else {
         error.value = data.message || 'Invalid 2FA code'
