@@ -64,14 +64,15 @@ export const useTenantsStore = defineStore('tenants', () => {
         return tenants.value.find(tenant => tenant.slug === slug);
     };
 
-    // Helper to get auth headers
+    // Helper to get auth headers (centralized)
+    import('../../../moii-auth/src/utils/http').then(mod => {});
     const getAuthHeaders = () => {
-        const token = authStore.token;
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
+        // @ts-ignore
+        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
+        const headers = sharedGetAuthHeaders();
+        // eslint-disable-next-line no-console
+        console.debug('[moii-tenants] getAuthHeaders token present:', !!headers['Authorization']);
+        return headers;
     };
 
     // Actions

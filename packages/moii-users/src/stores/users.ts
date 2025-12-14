@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../moii-auth/src/stores/auth';
 import config from '../../config.json';
 
 export interface User {
+    id: number;
     uuid: string;
     name: string;
     email: string;
@@ -137,17 +138,19 @@ export const useUsersStore = defineStore('users', () => {
         return users.value.find(user => user.uuid === uuid);
     };
 
-    // Helper to get auth headers
+    // Helper to get auth headers (centralized)
+    import('../../../moii-auth/src/utils/http').then(mod => {
+        // noop - ensures module is preloaded for bundlers
+    });
+
     const getAuthHeaders = () => {
-        const headers: Record<string, string> = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        };
-
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
-        }
-
+        // Use the centralized helper so all packages use the same token source
+        // (reading from localStorage ensures we get the latest token regardless of store lifecycle)
+        // @ts-ignore - dynamic import helper returns named export
+        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
+        const headers = sharedGetAuthHeaders();
+        // eslint-disable-next-line no-console
+        console.debug('[moii-users] getAuthHeaders token present:', !!headers['Authorization']);
         return headers;
     };
 

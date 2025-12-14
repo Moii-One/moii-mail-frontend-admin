@@ -5,8 +5,8 @@ import config from '../../config.json';
 
 export interface RateLimitStatus {
     identifier: string;
-    config_key: string;
-    type: string;
+    package: string;
+    rateType: string;
     label?: string;
     attempts: number;
     max_attempts: number;
@@ -18,7 +18,7 @@ export interface RateLimitStatus {
 }
 
 export interface RateLimitCheck {
-    config_key: string;
+    package: string;
     identifier: string;
     status: RateLimitStatus;
 }
@@ -57,26 +57,23 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         return rateLimitStatuses.value.find(status => status.identifier === identifier);
     };
 
-    // Helper to get auth headers
+    // Helper to get auth headers (centralized)
+    import('../../../moii-auth/src/utils/http').then(mod => {});
     const getAuthHeaders = () => {
-        const headers: Record<string, string> = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        };
-
-        if (authStore.token) {
-            headers['Authorization'] = `Bearer ${authStore.token}`;
-        }
-
+        // @ts-ignore
+        const { getAuthHeaders: sharedGetAuthHeaders } = require('../../../moii-auth/src/utils/http');
+        const headers = sharedGetAuthHeaders();
+        // eslint-disable-next-line no-console
+        console.debug('[moii-limiter] getAuthHeaders token present:', !!headers['Authorization']);
         return headers;
     };
 
     // Actions
-    async function fetchRateLimitStatuses(configKey: string, identifier?: string) {
+    async function fetchRateLimitStatuses(pkg: string, identifier?: string) {
         loading.value = true;
         error.value = null;
         try {
-            const requestBody: any = { config_key: configKey };
+            const requestBody: any = { package: pkg };
             if (identifier) {
                 requestBody.identifier = identifier;
             }
@@ -110,7 +107,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         }
     }
 
-    async function checkRateLimit(configKey: string, type: string, identifier: string) {
+    async function checkRateLimit(pkg: string, rateType: string, identifier: string) {
         loading.value = true;
         error.value = null;
         try {
@@ -118,8 +115,8 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    config_key: configKey,
-                    type: type,
+                    package: pkg,
+                    rateType: rateType,
                     identifier: identifier
                 })
             });
@@ -138,12 +135,12 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
             const data = await response.json();
             // Transform API response to match expected interface
             const transformedData: RateLimitCheck = {
-                config_key: data.data?.config_key || '',
+                package: data.data?.package || '',
                 identifier: data.data?.identifier || '',
                 status: {
                     identifier: data.data?.identifier || '',
-                    config_key: data.data?.config_key || '',
-                    type: data.data?.type || '',
+                    package: data.data?.package || '',
+                    rateType: data.data?.rateType || '',
                     attempts: data.data?.rate_limit_status?.attempts_made || 0,
                     max_attempts: parseInt(data.data?.rate_limit_status?.max_attempts || '0'),
                     remaining_attempts: data.data?.rate_limit_status?.retries_left || 0,
@@ -163,7 +160,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         }
     }
 
-    async function clearRateLimit(configKey: string, type: string, identifier: string) {
+    async function clearRateLimit(pkg: string, rateType: string, identifier: string) {
         loading.value = true;
         error.value = null;
         try {
@@ -171,8 +168,8 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    config_key: configKey,
-                    type: type,
+                    package: pkg,
+                    rateType: rateType,
                     identifier: identifier
                 })
             });
@@ -201,7 +198,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         }
     }
 
-    async function clearAllRateLimits(configKey: string) {
+    async function clearAllRateLimits(pkg: string) {
         loading.value = true;
         error.value = null;
         try {
@@ -209,7 +206,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    config_key: configKey
+                    package: pkg
                 })
             });
 
@@ -225,7 +222,7 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
             }
 
             const data = await response.json();
-            // Refresh all rate limit statuses after clearing all
+            // Refresh all rate limit statuses after clearing
             await fetchAllRateLimitStatuses();
             return data;
         } catch (err) {
@@ -269,10 +266,6 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         }
     }
 
-    function clearError() {
-        error.value = null;
-    }
-
     return {
         // State
         rateLimitStatuses,
@@ -290,7 +283,6 @@ export const useRateLimitsStore = defineStore('rateLimits', () => {
         fetchAllRateLimitStatuses,
         checkRateLimit,
         clearRateLimit,
-        clearAllRateLimits,
-        clearError
+        clearAllRateLimits
     };
 });
