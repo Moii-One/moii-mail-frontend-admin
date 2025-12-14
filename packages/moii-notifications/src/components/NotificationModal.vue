@@ -144,6 +144,7 @@ import NotificationChannelsSelector from '../components/NotificationChannelsSele
 import NotificationRecipientsSelector from '../components/NotificationRecipientsSelector.vue';
 import IconX from '../components/icon/icon-x.vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogOverlay, DialogPanel } from '@headlessui/vue';
+import Swal from 'sweetalert2';
 
 interface Props {
     notification?: Notification | null;
@@ -178,14 +179,15 @@ const form = reactive<CreateNotificationData>({
 const handleSubmit = async () => {
     // Validate recipients
     if (!form.recipients || form.recipients.length === 0) {
-        alert('Please add at least one recipient before submitting.');
+        showMessage('Please add at least one recipient before submitting.', 'error');
         return;
     }
     
     loading.value = true;
     try {
         if (props.isEdit && props.notification) {
-            await notificationsStore.updateNotification(props.notification.id, form as UpdateNotificationData);
+            // store expects notification uuid
+            await notificationsStore.updateNotification(props.notification.uuid, form as UpdateNotificationData);
         } else {
             await notificationsStore.createNotification(form);
         }
@@ -195,6 +197,21 @@ const handleSubmit = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+const showMessage = (msg = '', type = 'success') => {
+    const toast: any = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        customClass: { container: 'toast' },
+    });
+    toast.fire({
+        icon: type,
+        title: msg,
+        padding: '10px 20px',
+    });
 };
 
 const resetForm = () => {

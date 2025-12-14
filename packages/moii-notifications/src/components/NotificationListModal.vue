@@ -173,8 +173,9 @@
                             />
 
                             <button
+                                type="button"
                                 @click="removeFilter(index)"
-                                class="text-danger hover:text-danger-dark"
+                                class="btn btn-sm btn-outline-danger"
                             >
                                 <icon-trash class="w-4 h-4" />
                             </button>
@@ -231,7 +232,7 @@ const emit = defineEmits<{
 const usersStore = useUsersStore();
 const notificationsStore = useNotificationsStore();
 const loading = ref(false);
-const selectedUserId = ref('');
+const selectedUserId = ref<string>('');
 
 const form = reactive({
     name: '',
@@ -275,7 +276,8 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
         if (props.isEdit && props.list) {
-            await notificationsStore.updateList(props.list.id, form);
+            // store expects list uuid
+            await notificationsStore.updateList(props.list.uuid, form);
         } else {
             await notificationsStore.createList(form);
         }
@@ -285,6 +287,14 @@ const handleSubmit = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+const resetForm = () => {
+    form.name = '';
+    form.description = '';
+    form.is_dynamic = false;
+    form.filters = [];
+    form.user_ids = [];
 };
 
 watch(() => props.list, (newList) => {
@@ -298,14 +308,6 @@ watch(() => props.list, (newList) => {
         resetForm();
     }
 }, { immediate: true });
-
-const resetForm = () => {
-    form.name = '';
-    form.description = '';
-    form.is_dynamic = false;
-    form.filters = [];
-    form.user_ids = [];
-};
 
 onMounted(async () => {
     // Load users if not already loaded
