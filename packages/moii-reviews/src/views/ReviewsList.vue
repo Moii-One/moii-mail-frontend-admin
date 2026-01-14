@@ -125,35 +125,37 @@
                     <template #actions="data">
                         <div class="flex items-center gap-2">
                             <button
-                                v-if="data.value.status === 'pending'"
+                                v-if="data.value.status === 'pending' && hasPermission('reviews.approve')"
                                 type="button"
                                 class="btn btn-sm btn-success"
-                                @click="approveReview(data.value.id)"
+                                @click="approveReview(data.value.uuid)"
                                 :disabled="reviewsStore.loading"
                             >
                                 <icon-check class="w-4 h-4" />
                             </button>
                             <button
-                                v-if="data.value.status === 'pending'"
+                                v-if="data.value.status === 'pending' && hasPermission('reviews.reject')"
                                 type="button"
                                 class="btn btn-sm btn-danger"
-                                @click="rejectReview(data.value.id)"
+                                @click="rejectReview(data.value.uuid)"
                                 :disabled="reviewsStore.loading"
                             >
                                 <icon-x class="w-4 h-4" />
                             </button>
                             <button
+                                v-if="hasPermission('reviews.edit')"
                                 type="button"
                                 class="btn btn-sm btn-outline-primary"
-                                @click="editReview(data.value.id)"
+                                @click="editReview(data.value.uuid)"
                                 :disabled="reviewsStore.loading"
                             >
                                 <icon-edit class="w-4 h-4" />
                             </button>
                             <button
+                                v-if="hasPermission('reviews.delete')"
                                 type="button"
                                 class="btn btn-sm btn-outline-danger"
-                                @click="deleteReview(data.value.id)"
+                                @click="deleteReview(data.value.uuid)"
                                 :disabled="reviewsStore.loading"
                             >
                                 <icon-trash class="w-4 h-4" />
@@ -181,6 +183,8 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import { useReviewsStore } from '../stores/reviews';
 import ReviewsHeader, { ReviewFilterModel } from '../components/ReviewsHeader.vue';
 import ReviewModal from '../components/ReviewModal.vue';
@@ -196,6 +200,7 @@ import IconTrash from '../components/icon/icon-trash.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const reviewsStore = useReviewsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const filters = ref<ReviewFilterModel>({
     search: '',
@@ -210,6 +215,7 @@ const filteredReviews = computed(() => {
     return reviewsStore.reviews.map(review => {
         return {
             id: review.id,
+            uuid: review.uuid,
             user_name: review.user.name || 'Unknown User',
             user_email: review.user.email,
             reviewable_name: review.reviewable?.name || 'N/A',
@@ -302,7 +308,7 @@ const handleFiltersUpdate = async (newFilters: ReviewFilterModel) => {
     });
 };
 
-const approveReview = async (id: number) => {
+const approveReview = async (uuid: string) => {
     const result = await Swal.fire({
         title: 'Approve Review?',
         text: 'Are you sure you want to approve this review?',
@@ -316,7 +322,7 @@ const approveReview = async (id: number) => {
 
     if (result.isConfirmed) {
         try {
-            await reviewsStore.approveReview(id);
+            await reviewsStore.approveReview(uuid);
             showMessage('Review approved successfully.');
         } catch (error: any) {
             console.error('Error approving review:', error);
@@ -325,7 +331,7 @@ const approveReview = async (id: number) => {
     }
 };
 
-const rejectReview = async (id: number) => {
+const rejectReview = async (uuid: string) => {
     const result = await Swal.fire({
         title: 'Reject Review?',
         text: 'Are you sure you want to reject this review?',
@@ -339,7 +345,7 @@ const rejectReview = async (id: number) => {
 
     if (result.isConfirmed) {
         try {
-            await reviewsStore.rejectReview(id);
+            await reviewsStore.rejectReview(uuid);
             showMessage('Review rejected successfully.');
         } catch (error: any) {
             console.error('Error rejecting review:', error);
@@ -348,15 +354,15 @@ const rejectReview = async (id: number) => {
     }
 };
 
-const editReview = async (id: number) => {
-    const review = reviewsStore.reviews.find(r => r.id === id);
+const editReview = async (uuid: string) => {
+    const review = reviewsStore.reviews.find(r => r.uuid === uuid);
     if (review) {
         selectedReview.value = review;
         showModal.value = true;
     }
 };
 
-const deleteReview = async (id: number) => {
+const deleteReview = async (uuid: string) => {
     const result = await Swal.fire({
         title: 'Delete Review?',
         text: 'Are you sure you want to delete this review? This action cannot be undone.',
@@ -370,7 +376,7 @@ const deleteReview = async (id: number) => {
 
     if (result.isConfirmed) {
         try {
-            await reviewsStore.deleteReview(id);
+            await reviewsStore.deleteReview(uuid);
             showMessage('Review deleted successfully.');
         } catch (error: any) {
             console.error('Error deleting review:', error);
@@ -379,19 +385,9 @@ const deleteReview = async (id: number) => {
     }
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 
 const closeModal = () => {
@@ -402,7 +398,7 @@ const closeModal = () => {
 const handleSaveReview = async (reviewData: { rating: number; comment: string; status: 'pending' | 'approved' | 'rejected' }) => {
     try {
         if (selectedReview.value) {
-            await reviewsStore.updateReview(selectedReview.value.id, reviewData);
+            await reviewsStore.updateReview(selectedReview.value.uuid, reviewData);
             showMessage('Review updated successfully.');
             closeModal();
             // Refresh the reviews data after successful update
@@ -419,7 +415,10 @@ const handleSaveReview = async (reviewData: { rating: number; comment: string; s
 };
 
 onMounted(async () => {
-    await reviewsStore.fetchReviews();
+    await Promise.all([
+        reviewsStore.fetchReviews(),
+        loadUserPermissions()
+    ]);
 });
 </script>
 

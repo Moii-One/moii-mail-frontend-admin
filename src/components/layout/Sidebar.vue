@@ -676,7 +676,7 @@
                             <span>SYSTEM</span>
                         </h2>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('languages.view') || hasPermission('translations.view')">
                             <button
                                 type="button"
                                 class="nav-link group w-full"
@@ -693,17 +693,17 @@
                             </button>
                             <vue-collapsible :isOpen="activeDropdown === 'localizations'">
                                 <ul class="sub-menu text-gray-500">
-                                    <li>
+                                    <li v-if="hasPermission('languages.view')">
                                         <router-link to="/localizations/languages" @click="toggleMobileMenu">Languages</router-link>
                                     </li>
-                                    <li>
+                                    <li v-if="hasPermission('translations.view')">
                                         <router-link to="/localizations/translations" @click="toggleMobileMenu">Translations</router-link>
                                     </li>
                                 </ul>
                             </vue-collapsible>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('settings.view') || hasPermission('feature-flags.view')">
                             <button type="button" class="nav-link group w-full" :class="{ active: activeDropdown === 'settings' }" @click="activeDropdown === 'settings' ? (activeDropdown = null) : (activeDropdown = 'settings')">
                                 <div class="flex items-center">
                                     <icon-menu-documentation class="group-hover:!text-primary shrink-0" />
@@ -717,17 +717,17 @@
 
                             <vue-collapsible :opened="activeDropdown === 'settings' || null">
                                 <ul class="sub-menu text-gray-500">
-                                    <li>
+                                    <li v-if="hasPermission('settings.view')">
                                         <router-link to="/settings" @click="toggleMobileMenu">System Settings</router-link>
                                     </li>
-                                    <li>
+                                    <li v-if="hasPermission('feature-flags.view')">
                                         <router-link to="/settings/feature-flags" @click="toggleMobileMenu">Feature Flags</router-link>
                                     </li>
                                 </ul>
                             </vue-collapsible>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('rate-limits.view')">
                             <router-link to="/rate-limits" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconShield class="group-hover:!text-primary shrink-0" />
@@ -736,7 +736,7 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('users.view')">
                             <router-link to="/users" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconUsers class="group-hover:!text-primary shrink-0" />
@@ -745,7 +745,7 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('roles.view')">
                             <router-link to="/roles" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconShieldCheck class="group-hover:!text-primary shrink-0" />
@@ -754,7 +754,7 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('permissions.view')">
                             <router-link to="/permissions" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconKey class="group-hover:!text-primary shrink-0" />
@@ -763,7 +763,7 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('apps.view')">
                             <router-link to="/apps" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconApps class="group-hover:!text-primary shrink-0" />
@@ -772,7 +772,7 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('reviews.view')">
                             <router-link to="/reviews" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconMessage class="group-hover:!text-primary shrink-0" />
@@ -781,7 +781,61 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('categories.view')">
+                            <router-link to="/categories" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconFolder class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Categories</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('user-settings.view')">
+                            <router-link to="/user-settings" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconSettings class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">User Settings</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('logs.view')">
+                            <router-link to="/logs" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconBook class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">System Logs</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('cache.view')">
+                            <router-link to="/cache" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconServer class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Cache Management</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('scheduler.view')">
+                            <router-link to="/scheduler/tasks" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconClock class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Scheduled Tasks</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('media.view')">
+                            <router-link to="/media" class="nav-link group" @click="toggleMobileMenu">
+                                <div class="flex items-center">
+                                    <IconPhoto class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Media Library</span>
+                                </div>
+                            </router-link>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('notifications.view')">
                             <router-link to="/notifications" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconBell class="group-hover:!text-primary shrink-0" />
@@ -790,7 +844,35 @@
                             </router-link>
                         </li>
 
-                        <li class="menu nav-item">
+                        <li class="menu nav-item" v-if="hasPermission('mail.view') || hasPermission('mail.templates.view')">
+                            <button 
+                                type="button" 
+                                class="nav-link group w-full" 
+                                :class="{ 'active': activeDropdown === 'mail' }" 
+                                @click="activeDropdown === 'mail' ? (activeDropdown = null) : (activeDropdown = 'mail')"
+                            >
+                                <div class="flex items-center">
+                                    <IconMenuMailbox class="group-hover:!text-primary shrink-0" />
+                                    <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Email Management</span>
+                                </div>
+                                <div :class="{ 'rtl:rotate-90 -rotate-90': activeDropdown !== 'mail' }">
+                                    <IconCaretDown />
+                                </div>
+                            </button>
+
+                            <vue-collapsible :isOpen="activeDropdown === 'mail'">
+                                <ul class="sub-menu text-gray-500">
+                                    <li v-if="hasPermission('mail.templates.view')">
+                                        <router-link to="/mail/templates" @click="toggleMobileMenu">Templates</router-link>
+                                    </li>
+                                    <li v-if="hasPermission('mail.view')">
+                                        <router-link to="/mail/logs" @click="toggleMobileMenu">Mail Logs</router-link>
+                                    </li>
+                                </ul>
+                            </vue-collapsible>
+                        </li>
+
+                        <li class="menu nav-item" v-if="hasPermission('tenants.view')">
                             <router-link to="/tenants" class="nav-link group" @click="toggleMobileMenu">
                                 <div class="flex items-center">
                                     <IconUsers class="group-hover:!text-primary shrink-0" />
@@ -826,6 +908,7 @@
     import { ref, onMounted } from 'vue';
 
     import { useAppStore } from '@/stores/index';
+    import { usePermissions } from '@/composables/usePermissions';
     import VueCollapsible from 'vue-height-collapsible/vue3';
 
     import IconCaretsDown from '@/components/icon/icon-carets-down.vue';
@@ -860,8 +943,15 @@
     import IconApps from '../../../packages/moii-apps/src/components/icon/icon-apps.vue';
     import IconMessage from '../../../packages/moii-reviews/src/components/icon/icon-message.vue';
     import IconBell from '../../../packages/moii-notifications/src/components/icon/icon-bell.vue';
+    import IconFolder from '../../../packages/moii-categories/src/components/icon/icon-folder.vue';
+    import IconSettings from '@/components/icon/icon-settings.vue';
+    import IconBook from '@/components/icon/icon-book.vue';
+    import IconServer from '@/components/icon/icon-server.vue';
+    import IconClock from '@/components/icon/icon-clock.vue';
+    import IconPhoto from '../../../packages/moii-media/src/components/icon/IconPhoto.vue';
 
     const store = useAppStore();
+    const { hasPermission } = usePermissions();
     const activeDropdown: any = ref('');
     const subActive: any = ref('');
 

@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Rate Limits Management',
             requiresAuth: true,
+            permissions: ['rate-limits.view']
         },
     },
 ];

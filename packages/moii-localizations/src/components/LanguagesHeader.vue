@@ -6,7 +6,12 @@
                 <p class="text-white-dark text-sm mt-1">Manage application languages and locale settings</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button type="button" class="btn btn-primary" @click="$emit('add')">
+                <button 
+                    v-if="hasPermission('languages.create')"
+                    type="button" 
+                    class="btn btn-primary" 
+                    @click="$emit('add')"
+                >
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Add Language
                 </button>
@@ -91,6 +96,7 @@ import IconMenu from './icon/icon-menu.vue';
 import IconCaretDown from './icon/icon-caret-down.vue';
 import IconSearch from './icon/icon-search.vue';
 import IconRefresh from './icon/icon-refresh.vue';
+import { usePermissions } from '../composables/usePermissions';
 
 export interface LanguageFilterModel {
     search: string;
@@ -109,6 +115,7 @@ const emit = defineEmits<{
 }>();
 
 const showFilters = ref(false);
+const { hasPermission } = usePermissions();
 
 // Select options
 const statusOptions = [

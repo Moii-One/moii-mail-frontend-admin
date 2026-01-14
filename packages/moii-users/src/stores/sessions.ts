@@ -20,16 +20,28 @@ export interface UserSession {
 }
 
 export interface SessionsResponse {
-    message: string;
-    message_code: string;
+    success?: boolean;
+    message?: string;
+    message_code?: string;
+    data?: {
+        sessions: UserSession[];
+        total: number;
+        user?: {
+            uuid: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+        };
+    };
+    // Legacy format support
+    sessions?: UserSession[];
+    total_sessions?: number;
     user?: {
         uuid: string;
         email: string;
         first_name: string;
         last_name: string;
     };
-    sessions?: UserSession[];
-    total_sessions?: number;
 }
 
 export const useSessionsStore = defineStore('sessions', () => {
@@ -76,7 +88,8 @@ export const useSessionsStore = defineStore('sessions', () => {
             }
 
             const data: SessionsResponse = await response.json();
-            sessions.value = data.sessions || [];
+            // Handle both response formats: {sessions: [...]} and {data: {sessions: [...]}}
+            sessions.value = data.data?.sessions || data.sessions || [];
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -214,8 +227,10 @@ export const useSessionsStore = defineStore('sessions', () => {
 
             const data: SessionsResponse = await response.json();
             console.log('API Response data:', data);
-            console.log('Sessions from API:', data.sessions);
-            sessions.value = data.sessions || [];
+            console.log('Sessions from API (data.data?.sessions):', data.data?.sessions);
+            console.log('Sessions from API (data.sessions):', data.sessions);
+            // Handle both response formats: {sessions: [...]} and {data: {sessions: [...]}}
+            sessions.value = data.data?.sessions || data.sessions || [];
             console.log('Sessions stored in state:', sessions.value);
             return data;
         } catch (err) {

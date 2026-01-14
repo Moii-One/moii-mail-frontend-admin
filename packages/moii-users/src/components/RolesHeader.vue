@@ -63,7 +63,7 @@
                 <div class="flex items-center justify-end">
                     <button
                         type="button"
-                        class="btn btn-outline-warning"
+                        class="btn btn-outline-warning whitespace-nowrap"
                         @click="clearFilters"
                     >
                         <icon-refresh class="ltr:mr-2 rtl:ml-2" />

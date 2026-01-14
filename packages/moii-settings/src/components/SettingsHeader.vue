@@ -6,7 +6,12 @@
                 <p class="text-white-dark text-sm mt-1">Configure system settings and application parameters</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button type="button" class="btn btn-primary" @click="$emit('add')">
+                <button 
+                    v-if="hasPermission('settings.create')"
+                    type="button" 
+                    class="btn btn-primary" 
+                    @click="$emit('add')"
+                >
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Add Setting
                 </button>
@@ -103,6 +108,7 @@ import IconSearch from './icon/icon-search.vue';
 import IconMenu from './icon/icon-menu.vue';
 import IconCaretDown from './icon/icon-caret-down.vue';
 import IconRefresh from './icon/icon-refresh.vue';
+import { usePermissions } from '../composables/usePermissions';
 
 export interface FilterModel {
     search: string;
@@ -123,6 +129,7 @@ const emit = defineEmits<{
 }>();
 
 const showFilters = ref(false);
+const { hasPermission } = usePermissions();
 
 // Select options
 const typeOptions = [

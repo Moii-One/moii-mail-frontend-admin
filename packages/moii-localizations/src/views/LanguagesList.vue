@@ -101,14 +101,24 @@
                     </template>
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
-                            <button type="button" class="btn btn-sm btn-outline-info" @click="duplicateLanguage(data.value)">
+                            <button 
+                                v-if="hasPermission('languages.edit')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-info" 
+                                @click="duplicateLanguage(data.value)"
+                            >
                                 <icon-copy class="w-4 h-4" />
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @click="editLanguage(data.value)">
+                            <button 
+                                v-if="hasPermission('languages.edit')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                @click="editLanguage(data.value)"
+                            >
                                 <icon-edit class="w-4 h-4" />
                             </button>
                             <button 
-                                v-if="!data.value.is_default" 
+                                v-if="!data.value.is_default && hasPermission('languages.set-default')" 
                                 type="button" 
                                 class="btn btn-sm btn-outline-info" 
                                 @click="setAsDefault(data.value)"
@@ -117,6 +127,7 @@
                                 <icon-star class="w-4 h-4" />
                             </button>
                             <button 
+                                v-if="hasPermission('languages.edit')"
                                 type="button" 
                                 class="btn btn-sm btn-outline-warning" 
                                 @click="toggleActiveStatus(data.value)"
@@ -126,7 +137,7 @@
                                 <icon-x v-else class="w-4 h-4" />
                             </button>
                             <button 
-                                v-if="!data.value.is_default"
+                                v-if="!data.value.is_default && hasPermission('languages.delete')"
                                 type="button" 
                                 class="btn btn-sm btn-outline-danger" 
                                 @click="deleteLanguage(data.value)"
@@ -153,6 +164,8 @@
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { useLanguagesStore, type Language } from '../stores/languages';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import LanguagesHeader, { type LanguageFilterModel } from '../components/LanguagesHeader.vue';
 import LanguageModal from '../components/LanguageModal.vue';
 import IconGlobe from '../components/icon/icon-globe.vue';
@@ -167,6 +180,7 @@ import { useTranslationsStore } from '../stores/translations';
 
 const languagesStore = useLanguagesStore();
 const translationsStore = useTranslationsStore();
+const { hasPermission } = usePermissions();
 
 const addLanguageModal = ref(false);
 const currentLanguage = ref<Language | null>(null);
@@ -367,19 +381,9 @@ const toggleActiveStatus = async (language: Language) => {
     }
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 </script>
 

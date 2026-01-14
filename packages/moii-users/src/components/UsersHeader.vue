@@ -7,6 +7,7 @@
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button
+                    v-if="hasPermission('users.create')"
                     type="button"
                     class="btn btn-primary"
                     @click="$emit('create-user')"
@@ -29,7 +30,7 @@
         <!-- Filters Accordion -->
         <vue-collapsible :isOpen="showFilters">
             <div class="panel p-4 space-y-4 mb-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Search -->
                     <div>
                         <label class="text-sm font-semibold mb-2 block">Search</label>
@@ -55,6 +56,28 @@
                             :options="statusOptions"
                             placeholder="All Status"
                             @update:model-value="updateFilter('status', $event)"
+                        />
+                    </div>
+
+                    <!-- Tenant Filter -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Tenant</label>
+                        <CustomSelect
+                            :model-value="modelValue.tenant"
+                            :options="tenantOptions"
+                            placeholder="All Tenants"
+                            @update:model-value="updateFilter('tenant', $event)"
+                        />
+                    </div>
+
+                    <!-- App Filter -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">App</label>
+                        <CustomSelect
+                            :model-value="modelValue.app"
+                            :options="appOptions"
+                            placeholder="All Apps"
+                            @update:model-value="updateFilter('app', $event)"
                         />
                     </div>
 
@@ -85,7 +108,7 @@
                 <div class="flex items-center justify-end">
                     <button 
                         type="button" 
-                        class="btn btn-outline-warning"
+                        class="btn btn-outline-warning whitespace-nowrap"
                         @click="clearFilters"
                     >
                         <icon-refresh class="ltr:mr-2 rtl:ml-2" />
@@ -98,9 +121,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
 import { useUsersStore } from '../stores/users';
+import { useTenantsStore } from '../../../moii-tenants/src/stores/tenants';
+import { useAppsStore } from '../../../moii-apps/src/stores/apps';
+import { usePermissions } from '../composables/usePermissions';
 import CustomSelect from './CustomSelect.vue';
 import IconPlus from '../components/icon/icon-plus.vue';
 import IconMenu from '../components/icon/icon-menu.vue';
@@ -111,6 +137,8 @@ import IconRefresh from '../components/icon/icon-refresh.vue';
 export interface UserFilterModel {
     search: string;
     status: string;
+    tenant: string;
+    app: string;
     company: string;
     locked: string;
 }
@@ -129,7 +157,16 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const usersStore = useUsersStore();
+const tenantsStore = useTenantsStore();
+const appsStore = useAppsStore();
+const { hasPermission } = usePermissions();
 const showFilters = ref(false);
+
+// Load tenants and apps on mount
+onMounted(async () => {
+    await tenantsStore.fetchTenants();
+    await appsStore.fetchApps();
+});
 
 const updateFilter = (key: keyof UserFilterModel, value: string) => {
     emit('update:modelValue', {
@@ -142,6 +179,8 @@ const clearFilters = () => {
     emit('update:modelValue', {
         search: '',
         status: '',
+        tenant: '',
+        app: '',
         company: '',
         locked: ''
     });
@@ -160,6 +199,24 @@ const lockedOptions = [
     { value: 'false', label: 'Unlocked' },
     { value: 'true', label: 'Locked' }
 ];
+
+// Tenant options
+const tenantOptions = computed(() => [
+    { value: '', label: 'All Tenants' },
+    ...tenantsStore.tenants.map(tenant => ({
+        value: tenant.id?.toString() || '',
+        label: tenant.name
+    }))
+]);
+
+// App options
+const appOptions = computed(() => [
+    { value: '', label: 'All Apps' },
+    ...appsStore.apps.map(app => ({
+        value: app.id?.toString() || '',
+        label: app.name
+    }))
+]);
 
 // Get unique companies from users
 const availableCompanies = computed(() => {

@@ -11,7 +11,7 @@
             <h1 class="text-2xl font-bold">{{ list.name }}</h1>
             <div class="ml-auto flex items-center gap-2">
                 <router-link
-                    :to="`/notification-lists/${list.id}/edit`"
+                    :to="`/notification-lists/${list.uuid}/edit`"
                     class="btn btn-warning flex items-center gap-2"
                 >
                     <icon-edit class="w-4 h-4" />
@@ -120,8 +120,9 @@
 
                                 <button
                                     v-if="!list.is_dynamic"
+                                    type="button"
                                     @click="removeUser(user.uuid)"
-                                    class="text-danger hover:text-danger-dark"
+                                    class="btn btn-sm btn-outline-danger"
                                     title="Remove from list"
                                 >
                                     <icon-trash class="w-4 h-4" />
@@ -239,6 +240,8 @@ import IconX from '../components/icon/icon-x.vue';
 import IconUsers from '../components/icon/icon-users.vue';
 import IconFilter from '../components/icon/icon-filter.vue';
 import IconList from '../components/icon/icon-list.vue';
+import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -263,14 +266,14 @@ const formatDate = (date: string) => {
 };
 
 const loadList = async () => {
-    const id = parseInt(route.params.id as string);
+    const uuid = route.params.id as string;
     try {
-        await notificationsStore.fetchList(id);
-        list.value = notificationsStore.lists.find(l => l.id === id) || null;
+        await notificationsStore.fetchList(uuid);
+        list.value = notificationsStore.lists.find(l => l.uuid === uuid) || null;
 
         if (list.value) {
             // Load users in the list
-            const usersResponse = await notificationsStore.fetchListUsers(list.value.id);
+            const usersResponse = await notificationsStore.fetchListUsers(list.value.uuid);
             if (usersResponse.success) {
                 users.value = usersResponse.data || [];
             }
@@ -282,21 +285,40 @@ const loadList = async () => {
 
 const deleteList = async () => {
     if (!list.value) return;
-    if (confirm('Are you sure you want to delete this list?')) {
+    
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: `You are about to delete "${list.value.name}". This action cannot be undone.`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
+    });
+
+    if (result.isConfirmed) {
         try {
-            await notificationsStore.deleteList(list.value.id);
+            await notificationsStore.deleteList(list.value.uuid);
+            showMessage('List deleted successfully.');
             router.push('/notification-lists');
         } catch (error) {
             console.error('Error deleting list:', error);
+            showMessage('Failed to delete list.', 'error');
         }
     }
+};
+
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 
 const addUser = async () => {
     if (!list.value || !selectedUserId.value) return;
 
     try {
-        await notificationsStore.addUsersToList(list.value.id, [selectedUserId.value]);
+        await notificationsStore.addUsersToList(list.value.uuid, [selectedUserId.value]);
         selectedUserId.value = '';
         await loadList(); // Reload to get updated user count
     } catch (error) {
@@ -308,7 +330,7 @@ const removeUser = async (userId: string) => {
     if (!list.value) return;
 
     try {
-        await notificationsStore.removeUsersFromList(list.value.id, [userId]);
+        await notificationsStore.removeUsersFromList(list.value.uuid, [userId]);
         await loadList(); // Reload to get updated user count
     } catch (error) {
         console.error('Error removing user:', error);

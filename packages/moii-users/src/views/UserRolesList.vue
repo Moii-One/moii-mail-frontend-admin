@@ -198,6 +198,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2';
 import { useRolesStore, type Role } from '../stores/roles';
+import { useToast } from '../composables/useToast';
 import IconPlus from '../components/icon/icon-plus.vue';
 import IconUser from '../components/icon/icon-user.vue';
 import IconX from '../components/icon/icon-x.vue';
@@ -330,19 +331,9 @@ const unassignRole = async (role: Role) => {
     }
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 </script>
 

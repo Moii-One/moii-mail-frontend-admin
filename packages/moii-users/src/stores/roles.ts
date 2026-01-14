@@ -42,6 +42,13 @@ export interface PermissionsResponse {
     total?: number;
 }
 
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
 export interface UserRolesResponse {
     message: string;
     message_code: string;
@@ -64,6 +71,7 @@ export const useRolesStore = defineStore('roles', () => {
     // State
     const roles = ref<Role[]>([]);
     const permissions = ref<Permission[]>([]);
+    const permissionsMeta = ref<PaginationMeta | null>(null);
     const userRoles = ref<Role[]>([]);
     const userPermissions = ref<Permission[]>([]);
     const loading = ref(false);
@@ -104,7 +112,8 @@ export const useRolesStore = defineStore('roles', () => {
             }
 
             const data: RolesResponse = await response.json();
-            roles.value = data.roles || [];
+            // Handle both response formats: {roles: []} and {data: [], meta: {}}
+            roles.value = data.roles || (data as any).data || [];
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -211,11 +220,20 @@ export const useRolesStore = defineStore('roles', () => {
     }
 
     // Permissions Management Actions
-    async function getAllPermissions() {
+    async function getAllPermissions(page: number = 1, perPage: number = 50, search: string = '') {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/permissions`, {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                per_page: perPage.toString(),
+            });
+            
+            if (search) {
+                params.append('search', search);
+            }
+
+            const response = await fetch(`${API_URL}/permissions?${params.toString()}`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
@@ -231,8 +249,19 @@ export const useRolesStore = defineStore('roles', () => {
                 throw new Error(errorMessage);
             }
 
-            const data: PermissionsResponse = await response.json();
-            permissions.value = data.permissions || [];
+            const data = await response.json();
+            
+            // Handle both response formats: {permissions: []} and {data: [], meta: {}}
+            if (data.data && data.meta) {
+                // New paginated format
+                permissions.value = data.data || [];
+                permissionsMeta.value = data.meta;
+            } else {
+                // Legacy format
+                permissions.value = data.permissions || data.data || [];
+                permissionsMeta.value = null;
+            }
+            
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -343,10 +372,19 @@ export const useRolesStore = defineStore('roles', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/roles/${roleUuid}/permissions`, {
-                method: 'POST',
+            // Convert permission keys to UUIDs
+            const permissionUuids = permissionKeys
+                .map(key => {
+                    const permission = permissions.value.find(p => p.key === key);
+                    return permission?.uuid;
+                })
+                .filter((uuid): uuid is string => uuid !== undefined);
+
+            // Use the sync endpoint with permission_uuids
+            const response = await fetch(`${API_URL}/roles/${roleUuid}/permissions/sync`, {
+                method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ permissions: permissionKeys })
+                body: JSON.stringify({ permission_uuids: permissionUuids })
             });
 
             if (!response.ok) {
@@ -361,13 +399,8 @@ export const useRolesStore = defineStore('roles', () => {
             }
 
             const data = await response.json();
-            // Update role in local state
-            if (data.role) {
-                const index = roles.value.findIndex(r => r.uuid === roleUuid);
-                if (index !== -1) {
-                    roles.value[index] = data.role;
-                }
-            }
+            // Refresh the role to get updated permissions
+            await getAllRoles();
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -556,6 +589,7 @@ export const useRolesStore = defineStore('roles', () => {
         // State
         roles,
         permissions,
+        permissionsMeta,
         userRoles,
         userPermissions,
         loading,

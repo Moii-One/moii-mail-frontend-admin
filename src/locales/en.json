@@ -126,5 +126,175 @@
     "coming_soon_boxed": "Coming Soon Boxed",
     "coming_soon_cover": "Coming Soon Cover",
     "contact_us_boxed": "Contact Us Boxed",
-    "contact_us_cover": "Contact Us Cover"
+    "contact_us_cover": "Contact Us Cover",
+    "logs": {
+        "title": "System Logs",
+        "filters": {
+            "level": "Log Level",
+            "package": "Package",
+            "type": "Log Type",
+            "action": "Action",
+            "search": "Search",
+            "search_placeholder": "Search in messages...",
+            "from_date": "From Date",
+            "to_date": "To Date",
+            "user_id": "User ID",
+            "clear": "Clear Filters"
+        },
+        "stats": {
+            "total": "Total Logs",
+            "errors": "Errors",
+            "warnings": "Warnings",
+            "info": "Info & Debug"
+        },
+        "levels": {
+            "emergency": "Emergency",
+            "alert": "Alert",
+            "critical": "Critical",
+            "error": "Error",
+            "warning": "Warning",
+            "notice": "Notice",
+            "info": "Info",
+            "debug": "Debug"
+        },
+        "types": {
+            "http": "HTTP",
+            "database": "Database",
+            "auth": "Authentication",
+            "system": "System",
+            "application": "Application",
+            "security": "Security",
+            "performance": "Performance",
+            "validation": "Validation"
+        },
+        "actions": {
+            "view": "View Details",
+            "delete": "Delete",
+            "clear_logs": "Clear Logs"
+        },
+        "table": {
+            "level": "Level",
+            "package": "Package",
+            "message": "Message",
+            "type": "Type",
+            "action": "Action",
+            "created": "Created",
+            "actions": "Actions"
+        },
+        "modal": {
+            "title": "Log Details",
+            "level": "Level",
+            "package": "Package",
+            "type": "Type",
+            "action": "Action",
+            "user_id": "User ID",
+            "ip_address": "IP Address",
+            "created_at": "Created At",
+            "message": "Message",
+            "context": "Context",
+            "metadata": "Metadata",
+            "tags": "Tags",
+            "exception": "Exception",
+            "stack_trace": "Stack Trace",
+            "close": "Close"
+        },
+        "messages": {
+            "deleted_title": "Deleted!",
+            "deleted_text": "Log has been deleted successfully",
+            "cleared_title": "Cleared!",
+            "cleared_text": "Logs have been cleared successfully",
+            "delete_confirm_title": "Delete Log?",
+            "delete_confirm_text": "This log entry will be permanently deleted.",
+            "clear_confirm_title": "Clear Logs?",
+            "clear_confirm_text": "This will delete logs based on current filters. This action cannot be undone.",
+            "delete_button": "Yes, delete it",
+            "clear_button": "Yes, clear logs",
+            "cancel": "Cancel",
+            "error_title": "Error!",
+            "error_text": "An error occurred while processing your request",
+            "permission_error": "You do not have permission to perform this action",
+            "ok": "OK"
+        },
+        "time": {
+            "just_now": "Just now",
+            "ago": "ago"
+        }
+    },
+    "user_settings": {
+        "title": "User Settings",
+        "filters": {
+            "user": "User",
+            "select_user": "Select User",
+            "search": "Search",
+            "search_placeholder": "Search by key, value or description...",
+            "clear": "Clear Filters"
+        },
+        "stats": {
+            "total": "Total Settings",
+            "string": "String Settings",
+            "json": "JSON Settings",
+            "encrypted": "Encrypted Settings"
+        },
+        "table": {
+            "key": "Key",
+            "value": "Value",
+            "type": "Type",
+            "encrypted": "Encrypted",
+            "created": "Created",
+            "actions": "Actions"
+        },
+        "actions": {
+            "add": "Add Setting",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "modal": {
+            "add_title": "Add User Setting",
+            "edit_title": "Edit User Setting",
+            "key": "Key",
+            "key_placeholder": "e.g., theme_preference, notification_enabled",
+            "key_hint": "Unique identifier for this setting",
+            "type": "Type",
+            "value": "Value",
+            "value_placeholder": "Enter setting value...",
+            "value_hint": "For JSON/Array types, use valid JSON format",
+            "encrypt": "Encrypt Value",
+            "encrypt_hint": "Sensitive data will be encrypted in database",
+            "apply_to_all": "Apply to All Users",
+            "apply_to_all_hint": "Create this setting for all users in the system",
+            "description": "Description",
+            "description_placeholder": "Optional description...",
+            "cancel": "Cancel",
+            "save": "Save",
+            "saving": "Saving...",
+            "invalid_json": "Invalid JSON format"
+        },
+        "types": {
+            "string": "String",
+            "integer": "Integer",
+            "boolean": "Boolean",
+            "float": "Float",
+            "json": "JSON",
+            "array": "Array"
+        },
+        "messages": {
+            "created_title": "Created!",
+            "created_text": "Setting has been created successfully",
+            "updated_title": "Updated!",
+            "updated_text": "Setting has been updated successfully",
+            "deleted_title": "Deleted!",
+            "deleted_text": "Setting has been deleted successfully",
+            "delete_confirm_title": "Are you sure?",
+            "delete_confirm_text": "Do you want to delete '{key}'? This action cannot be undone.",
+            "delete_confirm_button": "Yes, delete it!",
+            "cancel": "Cancel",
+            "error_title": "Error!",
+            "error_text": "An error occurred while processing your request",
+            "ok": "OK"
+        },
+        "time": {
+            "just_now": "Just now",
+            "ago": "ago"
+        }
+    }
 }

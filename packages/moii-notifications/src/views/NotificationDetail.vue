@@ -11,7 +11,7 @@
             <h1 class="text-2xl font-bold">{{ notification.title }}</h1>
             <div class="ml-auto flex items-center gap-2">
                 <router-link
-                    :to="`/notifications/${notification.id}/edit`"
+                    :to="`/notifications/${notification.uuid}/edit`"
                     class="btn btn-warning flex items-center gap-2"
                 >
                     <icon-edit class="w-4 h-4" />
@@ -176,6 +176,8 @@ import IconSend from '../components/icon/icon-send.vue';
 import IconSchedule from '../components/icon/icon-schedule.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
 import IconUser from '../components/icon/icon-user.vue';
+import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -227,45 +229,100 @@ const formatDate = (date: string) => {
 
 const sendNotification = async () => {
     if (!notification.value) return;
-    if (confirm('Are you sure you want to send this notification now?')) {
+    
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Send Notification?',
+        text: `Are you sure you want to send "${notification.value.title}" now?`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, send now!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
+    });
+
+    if (result.isConfirmed) {
         try {
-            await notificationsStore.sendNotification(notification.value.id);
+            await notificationsStore.sendNotification(notification.value.uuid);
             await loadNotification();
+            showMessage('Notification sent successfully.');
         } catch (error) {
             console.error('Error sending notification:', error);
+            showMessage('Failed to send notification.', 'error');
         }
     }
 };
 
 const scheduleNotification = async () => {
     if (!notification.value) return;
-    const scheduledAt = prompt('Enter scheduled date and time (YYYY-MM-DD HH:MM):');
+    
+    const { value: scheduledAt } = await Swal.fire({
+        title: 'Schedule Notification',
+        html: `
+            <input type="datetime-local" id="scheduled-datetime" class="swal2-input" style="width: 80%;">
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#4361ee',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Schedule',
+        cancelButtonText: 'Cancel',
+        preConfirm: () => {
+            const datetime = (document.getElementById('scheduled-datetime') as HTMLInputElement).value;
+            if (!datetime) {
+                Swal.showValidationMessage('Please select a date and time');
+                return false;
+            }
+            return datetime;
+        }
+    });
+
     if (scheduledAt) {
         try {
-            await notificationsStore.scheduleNotification(notification.value.id, scheduledAt);
+            await notificationsStore.scheduleNotification(notification.value.uuid, scheduledAt);
             await loadNotification();
+            showMessage('Notification scheduled successfully.');
         } catch (error) {
             console.error('Error scheduling notification:', error);
+            showMessage('Failed to schedule notification.', 'error');
         }
     }
 };
 
 const deleteNotification = async () => {
     if (!notification.value) return;
-    if (confirm('Are you sure you want to delete this notification?')) {
+    
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: `You are about to delete "${notification.value.title}". This action cannot be undone.`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
+    });
+
+    if (result.isConfirmed) {
         try {
-            await notificationsStore.deleteNotification(notification.value.id);
+            await notificationsStore.deleteNotification(notification.value.uuid);
+            showMessage('Notification deleted successfully.');
             router.push('/notifications');
         } catch (error) {
             console.error('Error deleting notification:', error);
+            showMessage('Failed to delete notification.', 'error');
         }
     }
 };
 
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
+};
+
 const loadNotification = async () => {
-    const id = parseInt(route.params.id as string);
+    const uuid = route.params.id as string;
     try {
-        await notificationsStore.fetchNotification(id);
+        await notificationsStore.fetchNotification(uuid);
         notification.value = notificationsStore.currentNotification;
 
         if (notification.value) {

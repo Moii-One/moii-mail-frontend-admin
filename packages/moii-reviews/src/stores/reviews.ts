@@ -6,6 +6,7 @@ import config from '../../config.json';
 
 export interface Review {
     id: number;
+    uuid: string;
     user: {
         id: number;
         name: string;
@@ -85,6 +86,10 @@ export const useReviewsStore = defineStore('reviews', () => {
 
     const getReviewById = (id: number) => {
         return reviews.value.find(review => review.id === id);
+    };
+
+    const getReviewByUuid = (uuid: string) => {
+        return reviews.value.find(review => review.uuid === uuid);
     };
 
     // Helper to get auth headers
@@ -215,11 +220,11 @@ export const useReviewsStore = defineStore('reviews', () => {
         }
     }
 
-    async function updateReview(id: number, reviewData: UpdateReviewData) {
+    async function updateReview(uuid: string, reviewData: UpdateReviewData) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(reviewData)
@@ -238,7 +243,7 @@ export const useReviewsStore = defineStore('reviews', () => {
 
             const data: ReviewsResponse = await response.json();
             // Update review in local state
-            const index = reviews.value.findIndex(review => review.id === id);
+            const index = reviews.value.findIndex(review => review.uuid === uuid);
             if (index !== -1 && data.review) {
                 reviews.value[index] = { ...reviews.value[index], ...data.review };
             }
@@ -252,11 +257,11 @@ export const useReviewsStore = defineStore('reviews', () => {
         }
     }
 
-    async function approveReview(id: number) {
+    async function approveReview(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}/approve`, {
+            const response = await fetch(`${API_URL}/${uuid}/approve`, {
                 method: 'POST',
                 headers: getAuthHeaders()
             });
@@ -274,7 +279,7 @@ export const useReviewsStore = defineStore('reviews', () => {
 
             const data = await response.json();
             // Update review status in local state
-            const review = reviews.value.find(r => r.id === id);
+            const review = reviews.value.find(r => r.uuid === uuid);
             if (review) {
                 review.status = 'approved';
             }
@@ -288,11 +293,11 @@ export const useReviewsStore = defineStore('reviews', () => {
         }
     }
 
-    async function rejectReview(id: number) {
+    async function rejectReview(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}/reject`, {
+            const response = await fetch(`${API_URL}/${uuid}/reject`, {
                 method: 'POST',
                 headers: getAuthHeaders()
             });
@@ -310,7 +315,7 @@ export const useReviewsStore = defineStore('reviews', () => {
 
             const data = await response.json();
             // Update review status in local state
-            const review = reviews.value.find(r => r.id === id);
+            const review = reviews.value.find(r => r.uuid === uuid);
             if (review) {
                 review.status = 'rejected';
             }
@@ -324,11 +329,11 @@ export const useReviewsStore = defineStore('reviews', () => {
         }
     }
 
-    async function deleteReview(id: number) {
+    async function deleteReview(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });
@@ -346,7 +351,7 @@ export const useReviewsStore = defineStore('reviews', () => {
 
             const data = await response.json();
             // Remove review from local state
-            reviews.value = reviews.value.filter(review => review.id !== id);
+            reviews.value = reviews.value.filter(review => review.uuid !== uuid);
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -357,11 +362,11 @@ export const useReviewsStore = defineStore('reviews', () => {
         }
     }
 
-    async function fetchReviewById(id: number) {
+    async function fetchReviewByUuid(uuid: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${uuid}`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
@@ -403,6 +408,7 @@ export const useReviewsStore = defineStore('reviews', () => {
         rejectedReviews,
         totalReviews,
         getReviewById,
+        getReviewByUuid,
 
         // Actions
         fetchReviews,
@@ -412,6 +418,6 @@ export const useReviewsStore = defineStore('reviews', () => {
         approveReview,
         rejectReview,
         deleteReview,
-        fetchReviewById,
+        fetchReviewByUuid,
     };
 });

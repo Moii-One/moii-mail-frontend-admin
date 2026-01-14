@@ -6,7 +6,12 @@
                 <p class="text-white-dark text-sm mt-1">Manage tenants and their applications</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button type="button" class="btn btn-primary" @click="$emit('add')">
+                <button 
+                    v-if="hasPermission('tenants.create')"
+                    type="button" 
+                    class="btn btn-primary" 
+                    @click="$emit('add')"
+                >
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Add Tenant
                 </button>
@@ -62,7 +67,7 @@
                         class="btn btn-outline-warning"
                         @click="clearFilters"
                     >
-                        <icon-x class="ltr:mr-2 rtl:ml-2" />
+                        <icon-refresh class="ltr:mr-2 rtl:ml-2" />
                         Clear Filters
                     </button>
                 </div>
@@ -76,6 +81,7 @@
 import { ref, computed } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
 import CustomSelect from './CustomSelect.vue';
+import { usePermissions } from '../composables/usePermissions';
 
 interface Props {
     title: string;
@@ -94,6 +100,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const showFilters = ref(false);
+const { hasPermission } = usePermissions();
 
 const statusOptions = [
     { value: '', label: 'All Statuses' },

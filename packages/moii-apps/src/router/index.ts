@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Apps Management',
             requiresAuth: true,
+            permissions: ['apps.view']
         },
     },
 ];

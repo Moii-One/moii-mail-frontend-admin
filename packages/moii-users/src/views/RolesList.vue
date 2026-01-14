@@ -228,6 +228,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useRolesStore, type Role } from '../stores/roles';
+import { useToast } from '../composables/useToast';
 import RolesHeader from '../components/RolesHeader.vue';
 import ManagePermissionsModal from '../components/ManagePermissionsModal.vue';
 import IconPlus from '../components/icon/icon-plus.vue';
@@ -507,19 +508,9 @@ const groupedPermissions = computed(() => {
 
 const expandedCategories = ref<Record<string, boolean>>({});
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 </script>
 

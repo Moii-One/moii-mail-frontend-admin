@@ -3,7 +3,7 @@
         <RateLimitsHeader
             title="Rate Limits Management"
             v-model="filters"
-            :availableConfigKeys="availableConfigKeys"
+            :available-packages="availablePackages"
         />
 
         <!-- Rate Limits Statistics -->
@@ -81,7 +81,7 @@
                 >
                     <template #identifier="data">
                         <div class="font-semibold">{{ data.value.identifier }}</div>
-                        <div class="text-xs text-white-dark mt-1">{{ data.value.config_key }}</div>
+                        <div class="text-xs text-white-dark mt-1">{{ data.value.package }}</div>
                     </template>
                     <template #attempts="data">
                         <div class="text-center">
@@ -118,6 +118,7 @@
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
                             <button
+                                v-if="hasPermission('rate-limits.view')"
                                 type="button"
                                 class="btn btn-sm btn-outline-info"
                                 @click="checkRateLimit(data.value)"
@@ -127,6 +128,7 @@
                                 <icon-eye class="w-4 h-4" />
                             </button>
                             <button
+                                v-if="hasPermission('rate-limits.clear')"
                                 type="button"
                                 class="btn btn-sm btn-outline-warning"
                                 @click="clearRateLimit(data.value)"
@@ -137,9 +139,9 @@
                             </button>
                         </div>
                     </template>
-                    <template #type="data">
-                        <div class="font-semibold">{{ data.value.label || data.value.type }}</div>
-                        <div class="text-xs text-white-dark mt-1">{{ data.value.type }}</div>
+                    <template #rateType="data">
+                        <div class="font-semibold">{{ data.value.label || data.value.rateType }}</div>
+                        <div class="text-xs text-white-dark mt-1">{{ data.value.rateType }}</div>
                     </template>
                 </vue3-datatable>
             </div>
@@ -151,6 +153,8 @@
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { useRateLimitsStore, type RateLimitStatus } from '../stores/rateLimits';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import RateLimitsHeader, { type RateLimitFilterModel } from '../components/RateLimitsHeader.vue';
 import IconShield from '../components/icon/icon-shield.vue';
 import IconSquareCheck from '../components/icon/icon-square-check.vue';
@@ -161,16 +165,17 @@ import IconRefresh from '../components/icon/icon-refresh.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const rateLimitsStore = useRateLimitsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const filters = ref<RateLimitFilterModel>({
     search: '',
-    configKey: '', // Empty by default to show all config keys
+    package: '', // Empty by default to show all packages
     status: '',
     blocked: ''
 });
 
 const cols = ref([
-    { field: 'type', title: 'Type' },
+    { field: 'rateType', title: 'Type' },
     { field: 'identifier', title: 'Identifier' },
     { field: 'attempts', title: 'Attempts' },
     { field: 'remaining_attempts', title: 'Remaining' },
@@ -180,9 +185,9 @@ const cols = ref([
     { field: 'actions', title: 'Actions', isUnique: true },
 ]);
 
-// Get unique config keys from rate limit statuses
-const availableConfigKeys = computed(() => {
-    const keys = new Set(rateLimitsStore.rateLimitStatuses.map(status => status.config_key));
+// Get unique package keys from rate limit statuses
+const availablePackages = computed(() => {
+    const keys = new Set(rateLimitsStore.rateLimitStatuses.map(status => status.package));
     return Array.from(keys).sort();
 });
 
@@ -195,15 +200,15 @@ const filteredRateLimits = computed(() => {
         const query = filters.value.search.toLowerCase();
         results = results.filter(limit =>
             limit.identifier.toLowerCase().includes(query) ||
-            limit.config_key.toLowerCase().includes(query) ||
-            limit.type.toLowerCase().includes(query) ||
+            limit.package.toLowerCase().includes(query) ||
+            limit.rateType.toLowerCase().includes(query) ||
             (limit.label && limit.label.toLowerCase().includes(query))
         );
     }
 
-    // Apply config key filter
-    if (filters.value.configKey) {
-        results = results.filter(limit => limit.config_key === filters.value.configKey);
+    // Apply package filter
+    if (filters.value.package) {
+        results = results.filter(limit => limit.package === filters.value.package);
     }
 
     // Apply status filter
@@ -225,7 +230,10 @@ const filteredRateLimits = computed(() => {
 });
 
 onMounted(async () => {
-    await loadRateLimits();
+    await Promise.all([
+        loadRateLimits(),
+        loadUserPermissions()
+    ]);
 });
 
 const loadRateLimits = async () => {
@@ -275,48 +283,41 @@ const getTotalBlockedTime = (): string => {
 
 const checkRateLimit = async (rateLimit: RateLimitStatus) => {
     try {
-        const result = await rateLimitsStore.checkRateLimit(rateLimit.config_key, rateLimit.type, rateLimit.identifier);
-        showMessage(`Rate limit checked: ${result.status.attempts}/${result.status.max_attempts} attempts`, 'info');
+        const result = await rateLimitsStore.checkRateLimit(rateLimit.package, rateLimit.rateType, rateLimit.identifier);
+        Swal.fire({
+            title: 'Rate Limit Status',
+            html: `<pre class="text-left">${JSON.stringify(result, null, 2)}</pre>`,
+            confirmButtonText: 'OK'
+        });
     } catch (error) {
-        showMessage('Failed to check rate limit.', 'error');
+        Swal.fire('Error', 'Failed to check rate limit status.', 'error');
     }
 };
 
 const clearRateLimit = async (rateLimit: RateLimitStatus) => {
-    const result = await Swal.fire({
-        icon: 'warning',
-        title: 'Clear Rate Limit?',
-        text: `Are you sure you want to clear the rate limit for "${rateLimit.identifier}"?`,
-        showCancelButton: true,
-        confirmButtonText: 'Yes, clear it!',
-        cancelButtonText: 'Cancel',
-        padding: '2em',
-        customClass: { container: 'sweet-alerts' },
-    });
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, clear it!'
+        });
 
-    if (result.isConfirmed) {
-        try {
-            await rateLimitsStore.clearRateLimit(rateLimit.config_key, rateLimit.type, rateLimit.identifier);
-            showMessage('Rate limit cleared successfully.');
-        } catch (error) {
-            showMessage('Failed to clear rate limit.', 'error');
+        if (result.isConfirmed) {
+            await rateLimitsStore.clearRateLimit(rateLimit.package, rateLimit.rateType, rateLimit.identifier);
+            Swal.fire('Cleared!', 'The rate limit has been cleared.', 'success');
         }
+    } catch (error) {
+        Swal.fire('Error', 'Failed to clear rate limit.', 'error');
     }
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 </script>
 

@@ -107,6 +107,7 @@
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
                             <button
+                                v-if="hasPermission('apps.edit')"
                                 type="button"
                                 class="btn btn-outline-primary btn-sm"
                                 @click="editApp(data.value)"
@@ -116,6 +117,7 @@
                                 <icon-edit class="w-3 h-3" />
                             </button>
                             <button
+                                v-if="hasPermission('apps.create')"
                                 type="button"
                                 class="btn btn-outline-info btn-sm"
                                 @click="duplicateApp(data.value)"
@@ -125,6 +127,7 @@
                                 <icon-copy class="w-3 h-3" />
                             </button>
                             <button
+                                v-if="hasPermission('apps.delete')"
                                 type="button"
                                 class="btn btn-outline-danger btn-sm"
                                 @click="deleteApp(data.value)"
@@ -156,12 +159,15 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import { useAppsStore } from '../stores/apps';
 import AppsHeader from '../components/AppsHeader.vue';
 import AppModal from '../components/AppModal.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const appsStore = useAppsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const filters = ref({
     search: '',
@@ -209,7 +215,10 @@ watch(filters, () => {
 }, { deep: true });
 
 onMounted(async () => {
-    await loadApps();
+    await Promise.all([
+        loadApps(),
+        loadUserPermissions()
+    ]);
 });
 
 const loadApps = async () => {
@@ -370,19 +379,9 @@ const duplicateApp = (app: any) => {
     showModal.value = true;
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 </script>
 

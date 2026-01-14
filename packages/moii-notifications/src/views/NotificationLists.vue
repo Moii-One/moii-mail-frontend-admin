@@ -1,14 +1,30 @@
 <template>
     <div>
-        <NotificationsHeader
-            title="Notification Lists"
-            :total-items="lists.length"
-            :show-stats="true"
-            :show-filters="false"
-            :show-create="true"
-            create-label="List"
-            @create="openCreateModal"
-        />
+        <!-- Quick Navigation -->
+        <div class="mb-4">
+            <button
+                type="button"
+                class="btn btn-outline-secondary"
+                @click="router.push('/notifications')"
+            >
+                <icon-arrow-left class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
+                Back to Notifications
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+                <h5 class="font-semibold text-lg dark:text-white-light">Notification Lists</h5>
+                <p class="text-white-dark text-sm mt-1">Manage user lists for targeted notifications</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" class="btn btn-primary" @click="openCreateModal">
+                    <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
+                    Create List
+                </button>
+            </div>
+        </div>
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -103,26 +119,27 @@
                     </template>
 
                     <template #actions="data">
-                        <div class="flex items-center gap-2">
+                        <div class="flex gap-2 items-center justify-center">
                             <router-link
-                                :to="`/notification-lists/${data.value.id}`"
-                                class="text-info hover:text-info-dark"
+                                :to="`/notification-lists/${data.value.uuid}`"
+                                class="btn btn-sm btn-outline-info"
                                 title="View"
                             >
                                 <icon-eye class="w-4 h-4" />
                             </router-link>
 
                             <router-link
-                                :to="`/notification-lists/${data.value.id}/edit`"
-                                class="text-warning hover:text-warning-dark"
+                                :to="`/notification-lists/${data.value.uuid}/edit`"
+                                class="btn btn-sm btn-outline-primary"
                                 title="Edit"
                             >
                                 <icon-edit class="w-4 h-4" />
                             </router-link>
 
                             <button
+                                type="button"
                                 @click="deleteList(data.value)"
-                                class="text-danger hover:text-danger-dark"
+                                class="btn btn-sm btn-outline-danger"
                                 title="Delete"
                             >
                                 <icon-trash class="w-4 h-4" />
@@ -146,8 +163,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useNotificationsStore, type NotificationList } from '../stores/notifications';
-import NotificationsHeader from '../components/NotificationsHeader.vue';
 import NotificationListModal from '../components/NotificationListModal.vue';
 import IconNotificationList from '../components/icon/icon-notification-list.vue';
 import IconList from '../components/icon/icon-list.vue';
@@ -156,7 +173,13 @@ import IconUsers from '../components/icon/icon-users.vue';
 import IconEye from '../components/icon/icon-eye.vue';
 import IconEdit from '../components/icon/icon-edit.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
+import IconArrowLeft from '../components/icon/icon-arrow-left.vue';
+import IconPlus from '../components/icon/icon-plus.vue';
+import Vue3Datatable from '@bhplugin/vue3-datatable';
+import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
 
+const router = useRouter();
 const notificationsStore = useNotificationsStore();
 
 const showModal = ref(false);
@@ -198,13 +221,31 @@ const handleSaved = async () => {
 };
 
 const deleteList = async (list: NotificationList) => {
-    if (confirm('Are you sure you want to delete this list?')) {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: `You are about to delete "${list.name}". This action cannot be undone.`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
+    });
+
+    if (result.isConfirmed) {
         try {
-            await notificationsStore.deleteList(list.id);
+            await notificationsStore.deleteList(list.uuid);
+            showMessage('List deleted successfully.');
         } catch (error) {
             console.error('Error deleting list:', error);
+            showMessage('Failed to delete list.', 'error');
         }
     }
+};
+
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 
 const loadLists = async () => {
@@ -222,3 +263,10 @@ onMounted(async () => {
     await loadLists();
 });
 </script>
+
+<style>
+.datatable .bh-pagination {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+</style>

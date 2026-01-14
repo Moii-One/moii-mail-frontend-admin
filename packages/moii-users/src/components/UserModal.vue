@@ -105,6 +105,50 @@
                                         </div>
                                     </div>
 
+                                    <!-- Multi-tenancy Section -->
+                                    <div class="mb-6">
+                                        <h6 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Multi-Tenancy</h6>
+                                        
+                                        <div class="grid grid-cols-2 gap-4 mb-5">
+                                            <div>
+                                                <label for="tenant">Tenant</label>
+                                                <div class="tenant-select-wrapper">
+                                                    <Multiselect
+                                                        v-model="selectedTenant"
+                                                        :options="tenantOptions"
+                                                        class="custom-multiselect"
+                                                        :searchable="true"
+                                                        placeholder="Select Tenant (Optional)"
+                                                        label="name"
+                                                        track-by="id"
+                                                        selected-label=""
+                                                        select-label=""
+                                                        deselect-label=""
+                                                        :allow-empty="true"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label for="app">App</label>
+                                                <div class="app-select-wrapper">
+                                                    <Multiselect
+                                                        v-model="selectedApp"
+                                                        :options="appOptions"
+                                                        class="custom-multiselect"
+                                                        :searchable="true"
+                                                        placeholder="Select App (Optional)"
+                                                        label="name"
+                                                        track-by="id"
+                                                        selected-label=""
+                                                        select-label=""
+                                                        deselect-label=""
+                                                        :allow-empty="true"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Contact Information Section -->
                                     <div class="mb-6">
                                         <h6 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Contact Information</h6>
@@ -222,6 +266,8 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 import { useUsersStore, type User, type CreateUserData, type UpdateUserData } from '../stores/users';
+import { useTenantsStore } from '../../../moii-tenants/src/stores/tenants';
+import { useAppsStore } from '../../../moii-apps/src/stores/apps';
 import IconX from '../components/icon/icon-x.vue';
 import Multiselect from '@suadelabs/vue3-multiselect';
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
@@ -241,6 +287,8 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const usersStore = useUsersStore();
+const tenantsStore = useTenantsStore();
+const appsStore = useAppsStore();
 const API_URL = config.api_url;
 
 const loading = ref(false);
@@ -248,6 +296,10 @@ const show = computed(() => true);
 const countries = ref<string[]>([]);
 const selectedCountry = ref<string>('');
 const countryCodeMap = ref<Record<string, string>>({}); // Maps country name to code
+const selectedTenant = ref<any>(null);
+const selectedApp = ref<any>(null);
+const tenantOptions = computed(() => tenantsStore.tenants);
+const appOptions = computed(() => appsStore.apps);
 
 const form = ref({
     first_name: '',
@@ -255,6 +307,8 @@ const form = ref({
     email: '',
     password: '',
     password_confirmation: '',
+    tenant_id: null as number | null,
+    app_id: null as number | null,
     company: '',
     phone: '',
     street_address: '',
@@ -264,9 +318,10 @@ const form = ref({
     status: 'active' as 'active' | 'inactive' | 'suspended'
 });
 
-// Fetch countries from backend
+// Fetch countries, tenants, and apps from backend
 onMounted(async () => {
     try {
+        // Fetch countries
         const response = await fetch(`${API_URL}/countries`);
         if (response.ok) {
             const data = await response.json();
@@ -276,8 +331,12 @@ onMounted(async () => {
                 countryCodeMap.value = data.countries; // { "US": "United States", ... }
             }
         }
+        
+        // Fetch tenants and apps
+        await tenantsStore.fetchTenants();
+        await appsStore.fetchApps();
     } catch (error) {
-        console.error('Error fetching countries:', error);
+        console.error('Error fetching data:', error);
     }
 
     // More aggressive autocomplete disabling
@@ -326,6 +385,8 @@ watch([() => props.user, countryCodeMap], ([newUser]) => {
             email: newUser.email,
             password: '',
             password_confirmation: '',
+            tenant_id: userAny.tenant_id || null,
+            app_id: userAny.app_id || null,
             company: newUser.company || '',
             phone: newUser.phone || '',
             street_address: userAny.street_address || '',
@@ -334,6 +395,19 @@ watch([() => props.user, countryCodeMap], ([newUser]) => {
             country: userAny.country || '',
             status: newUser.status
         };
+        
+        // Set selected tenant and app
+        if (userAny.tenant_id) {
+            selectedTenant.value = tenantsStore.tenants.find(t => t.id === userAny.tenant_id) || null;
+        } else {
+            selectedTenant.value = null;
+        }
+        
+        if (userAny.app_id) {
+            selectedApp.value = appsStore.apps.find(a => a.id === userAny.app_id) || null;
+        } else {
+            selectedApp.value = null;
+        }
         
         // Set selected country - convert code to name if available
         if (userAny.country && Object.keys(countryCodeMap.value).length > 0) {
@@ -352,6 +426,8 @@ watch([() => props.user, countryCodeMap], ([newUser]) => {
             email: '',
             password: '',
             password_confirmation: '',
+            tenant_id: null,
+            app_id: null,
             company: '',
             phone: '',
             street_address: '',
@@ -361,6 +437,8 @@ watch([() => props.user, countryCodeMap], ([newUser]) => {
             status: 'active'
         };
         selectedCountry.value = '';
+        selectedTenant.value = null;
+        selectedApp.value = null;
     }
 }, { immediate: true });
 
@@ -385,6 +463,8 @@ const handleSubmit = async () => {
                 email: form.value.email,
                 password: form.value.password,
                 password_confirmation: form.value.password_confirmation,
+                tenant_id: selectedTenant.value?.id || undefined,
+                app_id: selectedApp.value?.id || undefined,
                 company: form.value.company || undefined,
                 phone: form.value.phone || undefined,
                 street_address: form.value.street_address || undefined,
@@ -399,6 +479,8 @@ const handleSubmit = async () => {
                 first_name: form.value.first_name,
                 last_name: form.value.last_name,
                 email: form.value.email,
+                tenant_id: selectedTenant.value?.id || undefined,
+                app_id: selectedApp.value?.id || undefined,
                 company: form.value.company || undefined,
                 phone: form.value.phone || undefined,
                 street_address: form.value.street_address || undefined,

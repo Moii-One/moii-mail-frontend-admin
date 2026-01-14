@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useAppStore } from '@/stores/index';
 import { changeAnimation } from '@/config';
+import { usePermissions } from '@/composables/usePermissions';
 import { authRoutes } from '../../packages/moii-auth/src/router';
 import { exampleRoutes } from '../../packages/moii-example/src/router';
 import settingsRoutes from '../../packages/moii-settings/src/router';
@@ -9,6 +10,7 @@ import rateLimitsRoutes from '../../packages/moii-limiter/src/router';
 import userRoutes from '../../packages/moii-users/src/router';
 import appsRoutes from '../../packages/moii-apps/src/router';
 import tenantsRoutes from '../../packages/moii-tenants/src/router';
+import mailRoutes from '../../packages/moii-mail/src/router';
 import { requiresAuth, isAuthenticated, getLoginRedirect } from '../../packages/moii-auth/src/composables/useAuth';
 import { requiresAuth as exampleRequiresAuth } from '../../packages/moii-example/src/composables/useAuth';
 import { requiresAuth as settingsRequiresAuth } from '../../packages/moii-settings/src/composables/useAuth';
@@ -20,6 +22,12 @@ import { requiresAuth as tenantsRequiresAuth } from '../../packages/moii-tenants
 import HomeView from '../views/index.vue';
 import reviewRoutes from '../../packages/moii-reviews/src/router';
 import notificationsRoutes from '../../packages/moii-notifications/src/router';
+import categoryRoutes from '../../packages/moii-categories/src/router';
+import userSettingsRoutes from '../../packages/moii-user-settings/src/router';
+import logsRoutes from '../../packages/moii-logs/src/router';
+import cacheRoutes from '../../packages/moii-cache/src/router';
+import schedulerRoutes from '../../packages/moii-scheduler/src/router';
+import mediaRoutes from '../../packages/moii-media/src/router';
 
 const routes: RouteRecordRaw[] = [
     // dashboard
@@ -545,6 +553,27 @@ const routes: RouteRecordRaw[] = [
 
     // notifications (requires authentication)
     ...notificationsRoutes,
+
+    // categories (requires authentication)
+    ...categoryRoutes,
+
+    // user settings (requires authentication)
+    ...userSettingsRoutes,
+
+    // logs (requires authentication)
+    ...logsRoutes,
+
+    // cache (requires authentication)
+    ...cacheRoutes,
+
+    // scheduler (requires authentication)
+    ...schedulerRoutes,
+
+    // media (requires authentication)
+    ...mediaRoutes,
+
+    // mail (requires authentication)
+    ...mailRoutes,
 ];
 
 const router = createRouter({
@@ -578,9 +607,22 @@ router.beforeEach((to, from, next) => {
             next(loginPath);
             return;
         }
+
+        // Check if route requires specific permissions
+        if (to.meta?.permissions && Array.isArray(to.meta.permissions)) {
+            const { hasAnyPermission, isSuperAdmin } = usePermissions();
+            const requiredPermissions = to.meta.permissions as string[];
+
+            if (!hasAnyPermission(requiredPermissions)) {
+                // User doesn't have required permission, redirect to dashboard
+                console.warn(`Access denied to ${to.path}: Missing required permissions`, requiredPermissions);
+                next({ name: 'home' });
+                return;
+            }
+        }
     }
 
-    // User is authenticated or route doesn't require auth
+    // User is authenticated and has required permissions, or route doesn't require auth
     next();
 });
 router.afterEach((to, from, next) => {

@@ -12,6 +12,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Languages',
             requiresAuth: true,
+            permissions: ['languages.view']
         },
     },
     {
@@ -21,6 +22,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Translations',
             requiresAuth: true,
+            permissions: ['translations.view']
         },
     },
 ];

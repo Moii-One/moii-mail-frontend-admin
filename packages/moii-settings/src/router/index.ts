@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'System Settings',
             requiresAuth: true,
+            permissions: ['settings.view']
         },
     },
     {
@@ -17,6 +18,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Feature Flags',
             requiresAuth: true,
+            permissions: ['feature-flags.view']
         },
     },
 ];

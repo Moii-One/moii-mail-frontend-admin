@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
             title: 'Tenants Management',
             requiresAuth: true,
+            permissions: ['tenants.view']
         },
     },
 ];

@@ -142,7 +142,7 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
         if (isEdit.value) {
-            await notificationsStore.updateNotification(parseInt(route.params.id as string), form as UpdateNotificationData);
+            await notificationsStore.updateNotification(route.params.id as string, form as UpdateNotificationData);
         } else {
             await notificationsStore.createNotification(form);
         }
@@ -155,11 +155,11 @@ const handleSubmit = async () => {
 };
 
 onMounted(async () => {
-    const id = route.params.id as string;
-    if (id) {
+    const uuid = route.params.id as string;
+    if (uuid) {
         isEdit.value = true;
         try {
-            await notificationsStore.fetchNotification(parseInt(id));
+            await notificationsStore.fetchNotification(uuid);
             const notification = notificationsStore.currentNotification;
             if (notification) {
                 form.title = notification.title;

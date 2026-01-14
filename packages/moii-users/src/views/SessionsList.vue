@@ -128,6 +128,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2';
 import { useSessionsStore, type UserSession } from '../stores/sessions';
+import { useToast } from '../composables/useToast';
 import IconMonitor from '../components/icon/icon-monitor.vue';
 import IconGlobe from '../components/icon/icon-globe.vue';
 import IconClock from '../components/icon/icon-clock.vue';
@@ -265,19 +266,9 @@ const terminateAllSessions = async () => {
     }
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 
 const cols = ref([

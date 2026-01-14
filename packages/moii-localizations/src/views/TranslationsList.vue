@@ -115,6 +115,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useLanguagesStore } from '../stores/languages';
 import { useTranslationsStore } from '../stores/translations';
+import { useToast } from '../composables/useToast';
 import TranslationsHeader from '../components/TranslationsHeader.vue';
 import TranslationModal from '../components/TranslationModal.vue';
 import IconMenuComponents from '../components/icon/menu/icon-menu-components.vue';
@@ -316,19 +317,9 @@ const closeTranslationModal = () => {
     initialTranslationData.value = null;
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 </script>
 

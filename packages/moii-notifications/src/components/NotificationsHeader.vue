@@ -6,7 +6,7 @@
                 <p class="text-white-dark text-sm mt-1">Manage notifications and broadcasts</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button type="button" class="btn btn-primary" @click="$emit('add')">
+                <button v-if="hasPermission('notifications.create')" type="button" class="btn btn-primary" @click="$emit('add')">
                     <icon-plus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                     Create Notification
                 </button>
@@ -84,7 +84,7 @@
                         class="btn btn-outline-warning"
                         @click="clearFilters"
                     >
-                        <icon-x class="ltr:mr-2 rtl:ml-2" />
+                        <icon-refresh class="ltr:mr-2 rtl:ml-2" />
                         Clear Filters
                     </button>
                 </div>
@@ -97,12 +97,13 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
+import { usePermissions } from '../composables/usePermissions';
 import CustomSelect from './CustomSelect.vue';
 import IconPlus from './icon/icon-plus.vue';
 import IconMenu from './icon/icon-menu.vue';
 import IconCaretDown from './icon/icon-caret-down.vue';
 import IconSearch from './icon/icon-search.vue';
-import IconX from './icon/icon-x.vue';
+import IconRefresh from './icon/icon-refresh.vue';
 
 interface Props {
     title: string;
@@ -121,6 +122,7 @@ const emit = defineEmits<{
     'update:modelValue': [value: Props['modelValue']];
 }>();
 
+const { hasPermission } = usePermissions();
 const showFilters = ref(false);
 
 const statusOptions = [

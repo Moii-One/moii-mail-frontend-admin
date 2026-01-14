@@ -174,8 +174,9 @@
                             />
 
                             <button
+                                type="button"
                                 @click="removeFilter(index)"
-                                class="text-danger hover:text-danger-dark"
+                                class="btn btn-sm btn-outline-danger"
                             >
                                 <icon-trash class="w-4 h-4" />
                             </button>
@@ -265,8 +266,8 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
         if (isEdit.value) {
-            const id = parseInt(route.params.id as string);
-            await notificationsStore.updateList(id, form);
+            const uuid = route.params.id as string;
+            await notificationsStore.updateList(uuid, form);
         } else {
             await notificationsStore.createList(form);
         }
@@ -279,12 +280,12 @@ const handleSubmit = async () => {
 };
 
 onMounted(async () => {
-    const id = route.params.id as string;
-    if (id) {
+    const uuid = route.params.id as string;
+    if (uuid) {
         isEdit.value = true;
         try {
-            await notificationsStore.fetchList(parseInt(id));
-            const list = notificationsStore.lists.find(l => l.id === parseInt(id));
+            await notificationsStore.fetchList(uuid);
+            const list = notificationsStore.lists.find(l => l.uuid === uuid);
             if (list) {
                 form.name = list.name;
                 form.description = list.description || '';

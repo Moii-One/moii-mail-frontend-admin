@@ -1,12 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getAuthHeaders as sharedGetAuthHeaders } from '../utils/http';
+import { getAuthHeaders as sharedGetAuthHeaders, fetchWithAuth } from '../utils/http';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
   const isLoading = ref(false)
   const error = ref('')
-  const user = ref<any>(null)
+  
+  // Restore user from localStorage
+  const _storedUser = localStorage.getItem('user')
+  let parsedUser = null
+  try {
+    parsedUser = _storedUser ? JSON.parse(_storedUser) : null
+  } catch (e) {
+    console.error('Failed to parse stored user:', e)
+    localStorage.removeItem('user')
+  }
+  
+  const user = ref<any>(parsedUser)
   const _storedToken = localStorage.getItem('token') || ''
   const token = ref(_storedToken === 'undefined' ? '' : _storedToken)
 
@@ -273,9 +284,8 @@ export const useAuthStore = defineStore('auth', () => {
   const getActiveSessions = async () => {
     try {
       const config = (window as any).config.packages['moii-auth']
-      const response = await fetch(`${config.api_url}/sessions`, {
+      const response = await fetchWithAuth(`${config.api_url}/sessions`, {
         method: 'GET',
-        headers: sharedGetAuthHeaders(),
       })
 
       if (response.ok) {
@@ -286,6 +296,22 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (err) {
       return { success: false, error: 'Network error' }
+    }
+  }
+
+  // Developer helper to verify current token and server response
+  const checkMe = async () => {
+    try {
+      const config = (window as any).config.packages['moii-auth'];
+      const response = await fetchWithAuth(`${config.api_url}/me`, { method: 'GET' });
+      const text = await response.text();
+      if (response.ok) {
+        const data = JSON.parse(text);
+        return { success: true, data };
+      }
+      return { success: false, status: response.status, body: text };
+    } catch (err) {
+      return { success: false, error: err };
     }
   }
 

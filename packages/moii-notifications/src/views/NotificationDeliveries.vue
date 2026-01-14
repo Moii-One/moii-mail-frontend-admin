@@ -104,11 +104,12 @@
                     </template>
 
                     <template #actions="data">
-                        <div class="flex items-center gap-2">
+                        <div class="flex gap-2 items-center justify-center">
                             <button
                                 v-if="data.value.status === 'failed'"
+                                type="button"
                                 @click="showErrorDetails(data.value)"
-                                class="text-warning hover:text-warning-dark"
+                                class="btn btn-sm btn-outline-warning"
                                 title="View Error"
                             >
                                 <icon-alert-triangle class="w-4 h-4" />

@@ -6,6 +6,26 @@
             @add="openCreateModal"
         />
 
+        <!-- Quick Navigation -->
+        <div class="mb-4 flex gap-2">
+            <button
+                type="button"
+                class="btn btn-outline-info"
+                @click="router.push('/notification-lists')"
+            >
+                <icon-list class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
+                Manage User Lists
+            </button>
+            <button
+                type="button"
+                class="btn btn-outline-secondary"
+                @click="router.push('/notification-deliveries')"
+            >
+                <icon-notifications class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
+                View Delivery Reports
+            </button>
+        </div>
+
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="panel">
@@ -119,38 +139,42 @@
 
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
-                            <button
-                                type="button"
-                                class="btn btn-outline-info btn-sm"
-                                @click="router.push(`/notifications/${data.value.id}`)"
+                            <router-link
+                                v-if="hasPermission('notifications.view')"
+                                :to="`/notifications/${data.value.uuid}`"
+                                class="btn btn-sm btn-outline-info"
                                 title="View"
                             >
-                                <icon-eye class="w-3 h-3" />
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                @click="router.push(`/notifications/${data.value.id}/edit`)"
+                                <icon-eye class="w-4 h-4" />
+                            </router-link>
+                            
+                            <router-link
+                                v-if="hasPermission('notifications.edit')"
+                                :to="`/notifications/${data.value.uuid}/edit`"
+                                class="btn btn-sm btn-outline-primary"
                                 title="Edit"
                             >
-                                <icon-edit class="w-3 h-3" />
-                            </button>
+                                <icon-edit class="w-4 h-4" />
+                            </router-link>
+                            
                             <button
-                                v-if="data.value.status === 'draft'"
+                                v-if="data.value.status === 'draft' && hasPermission('notifications.send')"
                                 type="button"
-                                class="btn btn-outline-success btn-sm"
+                                class="btn btn-sm btn-outline-success"
                                 @click="sendNotification(data.value)"
                                 title="Send Now"
                             >
-                                <icon-send class="w-3 h-3" />
+                                <icon-send class="w-4 h-4" />
                             </button>
+                            
                             <button
+                                v-if="hasPermission('notifications.delete')"
                                 type="button"
-                                class="btn btn-outline-danger btn-sm"
+                                class="btn btn-sm btn-outline-danger"
                                 @click="deleteNotification(data.value)"
                                 title="Delete"
                             >
-                                <icon-trash class="w-3 h-3" />
+                                <icon-trash class="w-4 h-4" />
                             </button>
                         </div>
                     </template>
@@ -167,6 +191,7 @@
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationsStore, type Notification } from '../stores/notifications';
+import { usePermissions } from '../composables/usePermissions';
 import useNotificationChannels from '../composables/useNotificationChannels';
 import NotificationsHeader from '../components/NotificationsHeader.vue';
 import IconNotifications from '../components/icon/icon-notifications.vue';
@@ -176,11 +201,14 @@ import IconSend from '../components/icon/icon-send.vue';
 import IconEye from '../components/icon/icon-eye.vue';
 import IconEdit from '../components/icon/icon-edit.vue';
 import IconTrash from '../components/icon/icon-trash.vue';
+import IconList from '../components/icon/icon-list.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
 
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 const { getChannelLabel } = useNotificationChannels();
 
 const filters = reactive({
@@ -298,19 +326,19 @@ const handlePageChange = (page: number) => {
 
 const sendNotification = async (notification: Notification) => {
     const result = await Swal.fire({
+        icon: 'warning',
         title: 'Send Notification?',
         text: `Are you sure you want to send "${notification.title}" now? This will be sent to ${notification.total_recipients || 0} recipients.`,
-        icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#00ab55',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, send now',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Yes, send now!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
     });
 
     if (result.isConfirmed) {
         try {
-            await notificationsStore.sendNotification(notification.id);
+            await notificationsStore.sendNotification(notification.uuid);
             await notificationsStore.fetchNotifications();
             showMessage('Notification sent successfully.');
         } catch (error: any) {
@@ -343,7 +371,7 @@ const scheduleNotification = async (notification: Notification) => {
 
     if (scheduledAt) {
         try {
-            await notificationsStore.scheduleNotification(notification.id, scheduledAt);
+            await notificationsStore.scheduleNotification(notification.uuid, scheduledAt);
             await notificationsStore.fetchNotifications();
             showMessage('Notification scheduled successfully.');
         } catch (error: any) {
@@ -355,19 +383,19 @@ const scheduleNotification = async (notification: Notification) => {
 
 const deleteNotification = async (notification: Notification) => {
     const result = await Swal.fire({
-        title: 'Delete Notification?',
-        text: `Are you sure you want to delete "${notification.title}"? This action cannot be undone.`,
         icon: 'warning',
+        title: 'Are you sure?',
+        text: `You are about to delete "${notification.title}". This action cannot be undone!`,
         showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, delete',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        padding: '2em',
+        customClass: { container: 'sweet-alerts' },
     });
 
     if (result.isConfirmed) {
         try {
-            await notificationsStore.deleteNotification(notification.id);
+            await notificationsStore.deleteNotification(notification.uuid);
             showMessage('Notification deleted successfully.');
         } catch (error: any) {
             console.error('Error deleting notification:', error);
@@ -376,23 +404,23 @@ const deleteNotification = async (notification: Notification) => {
     }
 };
 
-const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 
 onMounted(async () => {
-    await notificationsStore.fetchNotifications();
-    await notificationsStore.fetchStatistics();
+    await Promise.all([
+        notificationsStore.fetchNotifications(),
+        notificationsStore.fetchStatistics(),
+        loadUserPermissions()
+    ]);
 });
 </script>
+
+<style>
+.datatable .bh-pagination {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+</style>

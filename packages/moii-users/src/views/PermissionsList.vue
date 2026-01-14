@@ -196,9 +196,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useRolesStore, type Permission } from '../stores/roles';
+import { useToast } from '../composables/useToast';
 import PermissionsHeader from '../components/PermissionsHeader.vue';
 import IconPlus from '../components/icon/icon-plus.vue';
 import IconMenu from '../components/icon/icon-menu.vue';
@@ -222,6 +223,11 @@ const filters = ref({
     filterCategory: ''
 });
 
+const pagination = ref({
+    currentPage: 1,
+    perPage: 500 // Load all permissions at once
+});
+
 const showPermissionModal = ref(false);
 const isEditing = ref(false);
 const selectedPermission = ref<Permission | null>(null);
@@ -232,18 +238,20 @@ const permissionForm = ref({
     description: ''
 });
 
+// Watch for search term changes and trigger server-side search with debounce
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+watch(() => filters.value.searchTerm, (newValue) => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        handleSearch();
+    }, 500); // 500ms debounce
+});
+
+
 const filteredPermissions = computed(() => {
     let filtered = rolesStore.permissions;
 
-    if (filters.value.searchTerm) {
-        const term = filters.value.searchTerm.toLowerCase();
-        filtered = filtered.filter(permission => 
-            permission.key.toLowerCase().includes(term) ||
-            (permission.description && permission.description.toLowerCase().includes(term)) ||
-            (permission.category && permission.category.toLowerCase().includes(term))
-        );
-    }
-
+    // Client-side category filter (since backend doesn't support it)
     if (filters.value.filterCategory) {
         filtered = filtered.filter(permission => permission.category === filters.value.filterCategory);
     }
@@ -289,7 +297,7 @@ onMounted(async () => {
 const loadData = async () => {
     try {
         await Promise.all([
-            rolesStore.getAllPermissions(),
+            rolesStore.getAllPermissions(pagination.value.currentPage, pagination.value.perPage, filters.value.searchTerm),
             rolesStore.getAllRoles()
         ]);
     } catch (error) {
@@ -298,11 +306,23 @@ const loadData = async () => {
     }
 };
 
+const handlePageChange = async (page: number) => {
+    pagination.value.currentPage = page;
+    await loadData();
+};
+
+const handleSearch = async () => {
+    pagination.value.currentPage = 1; // Reset to first page on search
+    await loadData();
+};
+
 const clearFilters = () => {
     filters.value = {
         searchTerm: '',
         filterCategory: ''
     };
+    pagination.value.currentPage = 1;
+    loadData();
 };
 
 const getPermissionRoles = (permissionKey: string) => {
@@ -421,19 +441,9 @@ const deletePermission = async (permission: Permission) => {
     }
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 </script>
 

@@ -68,7 +68,7 @@
         <div class="panel p-0 border-0 overflow-hidden">
             <div class="datatable">
                 <vue3-datatable
-                    :rows="filteredUsers"
+                    :rows="paddedUsers"
                     :columns="cols"
                     :totalRows="usersStore.pagination.total"
                     :search="filters.search"
@@ -80,7 +80,7 @@
                     nextArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M9 5L15 12L9 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
                 >
                     <template #name="data">
-                        <div class="flex items-center">
+                        <div v-if="!data.value._isEmpty" class="flex items-center">
                             <div class="shrink-0">
                                 <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                                     <span class="text-sm font-semibold text-primary">{{ getInitials(data.value.name) }}</span>
@@ -91,61 +91,90 @@
                                 <div class="text-xs text-white-dark">{{ data.value.email }}</div>
                             </div>
                         </div>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #roles="data">
-                        <div v-if="data.value.roles && data.value.roles.length > 0" class="flex flex-wrap gap-1">
+                        <div v-if="!data.value._isEmpty && data.value.roles && data.value.roles.length > 0" class="flex flex-wrap gap-1">
                             <span v-for="role in data.value.roles" :key="role.uuid" class="badge badge-outline-primary">
                                 {{ role.display_name || role.name }}
                             </span>
                         </div>
-                        <span v-else class="text-white-dark">No role</span>
+                        <span v-else-if="!data.value._isEmpty" class="text-white-dark">No role</span>
+                        <span v-else>&nbsp;</span>
+                    </template>
+                    <template #tenant="data">
+                        <div v-if="!data.value._isEmpty && data.value.tenant">
+                            <span class="badge badge-outline-info">{{ data.value.tenant.name }}</span>
+                        </div>
+                        <span v-else-if="!data.value._isEmpty" class="text-white-dark">-</span>
+                        <span v-else>&nbsp;</span>
+                    </template>
+                    <template #app="data">
+                        <div v-if="!data.value._isEmpty && data.value.app">
+                            <span class="badge badge-outline-secondary">{{ data.value.app.name }}</span>
+                        </div>
+                        <span v-else-if="!data.value._isEmpty" class="text-white-dark">-</span>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #status="data">
-                        <span class="badge" :class="getStatusBadgeClass(data.value.status)">
-                            {{ getStatusLabel(data.value.status) }}</span>
-                        <div v-if="data.value.is_locked" class="text-xs text-danger mt-1">
-                            <icon-lock class="w-3 h-3 inline mr-1" />
-                            Locked
+                        <div v-if="!data.value._isEmpty">
+                            <span class="badge" :class="getStatusBadgeClass(data.value.status)">
+                                {{ getStatusLabel(data.value.status) }}</span>
+                            <div v-if="data.value.is_locked" class="text-xs text-danger mt-1">
+                                <icon-lock class="w-3 h-3 inline mr-1" />
+                                Locked
+                            </div>
                         </div>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #company="data">
-                        <span v-if="data.value.company">{{ data.value.company }}</span>
-                        <span v-else class="text-white-dark">-</span>
+                        <span v-if="!data.value._isEmpty && data.value.company">{{ data.value.company }}</span>
+                        <span v-else-if="!data.value._isEmpty" class="text-white-dark">-</span>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #failed_login_attempts="data">
-                        <span :class="getFailedAttemptsClass(data.value.failed_login_attempts)">
+                        <span v-if="!data.value._isEmpty" :class="getFailedAttemptsClass(data.value.failed_login_attempts)">
                             {{ data.value.failed_login_attempts }}
                         </span>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #two_factor_enabled="data">
-                        <span class="badge" :class="data.value.two_factor_enabled ? 'badge-outline-success' : 'badge-outline-secondary'">
+                        <span v-if="!data.value._isEmpty" class="badge" :class="data.value.two_factor_enabled ? 'badge-outline-success' : 'badge-outline-secondary'">
                             {{ data.value.two_factor_enabled ? 'Enabled' : 'Disabled' }}
                         </span>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #last_login_at="data">
-                        <div v-if="data.value.last_login_at">
+                        <div v-if="!data.value._isEmpty && data.value.last_login_at">
                             <div class="text-sm">{{ formatDate(data.value.last_login_at) }}</div>
                             <div class="text-xs text-white-dark">{{ getTimeAgo(data.value.last_login_at) }}</div>
                         </div>
-                        <span v-else class="text-white-dark">Never</span>
+                        <span v-else-if="!data.value._isEmpty" class="text-white-dark">Never</span>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #created_at="data">
-                        <div class="text-sm">{{ formatDate(data.value.created_at) }}</div>
-                        <div class="text-xs text-white-dark">{{ getTimeAgo(data.value.created_at) }}</div>
+                        <div v-if="!data.value._isEmpty">
+                            <div class="text-sm">{{ formatDate(data.value.created_at) }}</div>
+                            <div class="text-xs text-white-dark">{{ getTimeAgo(data.value.created_at) }}</div>
+                        </div>
+                        <span v-else>&nbsp;</span>
                     </template>
                     <template #actions="data">
-                        <div class="flex gap-2 items-center justify-center">
+                        <div v-if="!data.value._isEmpty" class="flex gap-2 items-center justify-center">
                             <button
+                                v-if="hasPermission('users.view')"
                                 type="button"
-                                class="btn btn-sm btn-outline-info"
+                                class="btn btn-outline-info btn-sm"
                                 @click="viewUser(data.value)"
                                 title="View User Details"
                             >
                                 <icon-eye class="w-3 h-3" />
                             </button>
+                            
                             <button
+                                v-if="hasPermission('users.edit')"
                                 type="button"
-                                class="btn btn-sm btn-outline-primary"
+                                class="btn btn-outline-primary btn-sm"
                                 @click="editUser(data.value)"
                                 title="Edit User"
                             >
@@ -153,20 +182,22 @@
                             </button>
                             <div class="dropdown">
                                 <Popper
-                                    :placement="'bottom-end'"
-                                    offsetDistance="0"
-                                    class="align-middle"
+                                    placement="bottom-end"
+                                    :offset-distance="'0px'"
+                                    :arrow="false"
+                                    :interactive="true"
+                                    class="popper-dropdown"
                                 >
                                     <button
                                         type="button"
-                                        class="btn btn-sm btn-outline-secondary"
+                                        class="btn btn-outline-secondary btn-sm"
                                         title="More Actions"
                                     >
                                         <icon-dots-vertical class="w-3 h-3" />
                                     </button>
                                     <template #content="{ close }">
-                                        <ul class="!min-w-[170px]" @click="close()">
-                                            <li>
+                                        <ul class="!min-w-[170px] dropdown-menu-custom" @click="close()">
+                                            <li v-if="hasPermission('users.edit')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="toggleUserStatus(data.value)"
@@ -177,7 +208,7 @@
                                                     {{ data.value.status === 'active' ? 'Deactivate' : 'Activate' }}
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('users.edit')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="toggleAccountLock(data.value)"
@@ -188,7 +219,7 @@
                                                     {{ data.value.is_locked ? 'Unlock Account' : 'Lock Account' }}
                                                 </button>
                                             </li>
-                                            <li v-if="data.value.failed_login_attempts > 0">
+                                            <li v-if="data.value.failed_login_attempts > 0 && hasPermission('users.edit')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="resetFailedAttempts(data.value)"
@@ -198,7 +229,7 @@
                                                     Reset Failed Attempts
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('users.edit')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="manageUser2FA(data.value)"
@@ -208,7 +239,7 @@
                                                     {{ data.value.two_factor_enabled ? 'Disable' : 'Enable' }} 2FA
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('sessions.view')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="viewUserSessions(data.value)"
@@ -218,7 +249,7 @@
                                                     View Sessions
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('user-roles.assign')">
                                                 <button
                                                     class="w-full text-left"
                                                     @click="manageUserRoles(data.value)"
@@ -228,7 +259,7 @@
                                                     Manage Roles
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('sessions.revoke-all')">
                                                 <button
                                                     class="w-full text-left text-danger"
                                                     @click="terminateUserSessions(data.value)"
@@ -238,10 +269,10 @@
                                                     Terminate Sessions
                                                 </button>
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('users.delete')">
                                                 <hr class="my-1">
                                             </li>
-                                            <li>
+                                            <li v-if="hasPermission('users.delete')">
                                                 <button
                                                     class="w-full text-left text-danger"
                                                     @click="deleteUser(data.value)"
@@ -256,6 +287,7 @@
                                 </Popper>
                             </div>
                         </div>
+                        <span v-else>&nbsp;</span>
                     </template>
                 </vue3-datatable>
             </div>
@@ -273,11 +305,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 import Popper from 'vue3-popper';
 import { useUsersStore, type User } from '../stores/users';
+import { useAppStore } from '@/stores/index';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import UsersHeader from '../components/UsersHeader.vue';
 import UserModal from '../components/UserModal.vue';
 import IconUsers from '../components/icon/icon-users.vue';
@@ -300,16 +335,22 @@ import Vue3Datatable from '@bhplugin/vue3-datatable';
 interface UserFilterModel {
     search: string;
     status: string;
+    tenant: string;
+    app: string;
     company: string;
     locked: string;
 }
 
 const usersStore = useUsersStore();
 const router = useRouter();
+const appStore = useAppStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const filters = ref<UserFilterModel>({
     search: '',
     status: '',
+    tenant: '',
+    app: '',
     company: '',
     locked: ''
 });
@@ -321,6 +362,8 @@ const isCreateMode = ref(false);
 const cols = ref([
     { field: 'name', title: 'User' },
     { field: 'roles', title: 'Role', sort: false },
+    { field: 'tenant', title: 'Tenant', sort: false },
+    { field: 'app', title: 'App', sort: false },
     { field: 'status', title: 'Status' },
     { field: 'company', title: 'Company' },
     { field: 'failed_login_attempts', title: 'Failed Attempts' },
@@ -349,6 +392,22 @@ const filteredUsers = computed(() => {
         results = results.filter(user => user.status === filters.value.status);
     }
 
+    // Apply tenant filter
+    if (filters.value.tenant) {
+        results = results.filter(user => {
+            const userAny = user as any;
+            return userAny.tenant_id?.toString() === filters.value.tenant;
+        });
+    }
+
+    // Apply app filter
+    if (filters.value.app) {
+        results = results.filter(user => {
+            const userAny = user as any;
+            return userAny.app_id?.toString() === filters.value.app;
+        });
+    }
+
     // Apply company filter
     if (filters.value.company) {
         results = results.filter(user => user.company === filters.value.company);
@@ -363,17 +422,58 @@ const filteredUsers = computed(() => {
     return results;
 });
 
+// Pad filtered users to always show 10 rows minimum per page
+const paddedUsers = computed(() => {
+    const allUsers = [...filteredUsers.value];
+    const perPage = 10;
+    const totalPages = Math.ceil(allUsers.length / perPage);
+    const totalRowsNeeded = totalPages * perPage;
+    
+    while (allUsers.length < totalRowsNeeded) {
+        allUsers.push({
+            uuid: `empty-${allUsers.length}`,
+            name: '',
+            email: '',
+            status: '',
+            company: '',
+            roles: [],
+            failed_login_attempts: 0,
+            two_factor_enabled: false,
+            is_locked: false,
+            last_login_at: null,
+            created_at: '',
+            updated_at: '',
+            _isEmpty: true
+        } as any);
+    }
+    
+    return allUsers;
+});
+
 onMounted(async () => {
-    await loadUsers();
+    await Promise.all([
+        loadUsers(),
+        loadUserPermissions()
+    ]);
 });
 
 const loadUsers = async () => {
     try {
-        await usersStore.fetchUsers();
+        await usersStore.fetchUsers({
+            search: filters.value.search || undefined,
+            company: filters.value.company || undefined,
+            tenant_id: filters.value.tenant || undefined,
+            app_id: filters.value.app || undefined,
+        });
     } catch (error) {
         showMessage('Failed to load users.', 'error');
     }
 };
+
+// Watch filters and reload users when they change
+watch(filters, () => {
+    loadUsers();
+}, { deep: true });
 
 const getInitials = (name: string): string => {
     return name
@@ -552,6 +652,7 @@ const handleUserSave = async (userData: any) => {
             showMessage('User updated successfully.');
         }
         closeUserModal();
+        await loadUsers(); // Refresh the table
     } catch (error: any) {
         console.error('Save user error:', error);
         showMessage(error?.message || 'Failed to save user.', 'error');
@@ -709,19 +810,9 @@ const deleteUser = async (user: User) => {
     }
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 </script>
 

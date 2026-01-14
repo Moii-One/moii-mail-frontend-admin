@@ -12,6 +12,33 @@ app.use(pinia);
 import { loadConfig } from '@/config';
 await loadConfig();
 
+// Global fetch interceptor for 401 handling
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+  const response = await originalFetch(...args);
+  
+  // Handle 401 Unauthorized globally
+  if (response.status === 401) {
+    // Clear the invalid token from localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Get current path to preserve for redirect after login
+    const currentPath = window.location.pathname + window.location.search + window.location.hash;
+    
+    // Only redirect if not already on login page or auth routes
+    if (!window.location.pathname.includes('/login') && 
+        !window.location.pathname.includes('/register') &&
+        !window.location.pathname.includes('/password-reset') &&
+        !window.location.pathname.includes('/2fa')) {
+      const redirectUrl = encodeURIComponent(currentPath);
+      window.location.href = `/login?redirect=${redirectUrl}`;
+    }
+  }
+  
+  return response;
+};
+
 import router from '@/router';
 app.use(router);
 

@@ -119,6 +119,7 @@
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
                             <button
+                                v-if="hasPermission('tenants.edit')"
                                 type="button"
                                 class="btn btn-outline-primary btn-sm"
                                 @click="editTenant(data.value)"
@@ -128,6 +129,7 @@
                                 <icon-edit class="w-3 h-3" />
                             </button>
                             <button
+                                v-if="hasPermission('tenants.create')"
                                 type="button"
                                 class="btn btn-outline-info btn-sm"
                                 @click="duplicateTenant(data.value)"
@@ -137,7 +139,7 @@
                                 <icon-copy class="w-3 h-3" />
                             </button>
                             <button
-                                v-if="data.value.status === 'active'"
+                                v-if="data.value.status === 'active' && hasPermission('tenants.deactivate')"
                                 type="button"
                                 class="btn btn-outline-warning btn-sm"
                                 @click="blockTenant(data.value)"
@@ -147,7 +149,7 @@
                                 <icon-ban class="w-3 h-3" />
                             </button>
                             <button
-                                v-if="data.value.status === 'blocked'"
+                                v-if="data.value.status === 'blocked' && hasPermission('tenants.activate')"
                                 type="button"
                                 class="btn btn-outline-success btn-sm"
                                 @click="unblockTenant(data.value)"
@@ -157,6 +159,7 @@
                                 <icon-check class="w-3 h-3" />
                             </button>
                             <button
+                                v-if="hasPermission('tenants.delete')"
                                 type="button"
                                 class="btn btn-outline-danger btn-sm"
                                 @click="deleteTenant(data.value)"
@@ -189,11 +192,14 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useTenantsStore } from '../stores/tenants';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import TenantsHeader from '../components/TenantsHeader.vue';
 import TenantModal from '../components/TenantModal.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const tenantsStore = useTenantsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const filters = ref({
     search: '',
@@ -236,7 +242,10 @@ watch(filters, () => {
 }, { deep: true });
 
 onMounted(async () => {
-    await loadTenants();
+    await Promise.all([
+        loadTenants(),
+        loadUserPermissions()
+    ]);
 });
 
 const loadTenants = async () => {
@@ -402,19 +411,9 @@ const unblockTenant = async (tenant: any) => {
     }
 };
 
+const { showToast } = useToast();
 const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-
-    toast.fire({
-        icon: type,
-        title: message,
-    });
+    showToast(message, type);
 };
 </script>
 

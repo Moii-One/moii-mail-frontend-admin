@@ -76,7 +76,12 @@
                     </template>
                     <template #enabled="data">
                         <div class="flex items-center">
-                            <label class="w-12 h-6 relative cursor-pointer" @click="handleToggle(data.value)" :class="{ 'opacity-50 cursor-not-allowed': featureFlagsStore.loading }">
+                            <label 
+                                v-if="hasPermission('feature-flags.toggle')"
+                                class="w-12 h-6 relative cursor-pointer" 
+                                @click="handleToggle(data.value)" 
+                                :class="{ 'opacity-50 cursor-not-allowed': featureFlagsStore.loading }"
+                            >
                                 <span :class="data.value.enabled ? 'bg-primary' : 'bg-[#ebedf2] dark:bg-dark'" class="block h-full rounded-full relative">
                                     <div class="absolute w-4 h-4 bg-white rounded-full top-1 transition-all duration-300" :style="{ left: data.value.enabled ? '28px' : '4px' }"></div>
                                 </span>
@@ -88,13 +93,24 @@
                     </template>
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
-                            <button type="button" class="btn btn-sm btn-outline-info" @click="duplicateFeature(data.value)">
+                            <button 
+                                v-if="hasPermission('feature-flags.create')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-info" 
+                                @click="duplicateFeature(data.value)"
+                            >
                                 <icon-copy class="w-4 h-4" />
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @click="editFeature(data.value)">
+                            <button 
+                                v-if="hasPermission('feature-flags.edit')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                @click="editFeature(data.value)"
+                            >
                                 <icon-edit class="w-4 h-4" />
                             </button>
                             <button 
+                                v-if="hasPermission('feature-flags.delete')"
                                 type="button" 
                                 class="btn btn-sm btn-outline-danger" 
                                 @click="deleteFeature(data.value)"
@@ -121,6 +137,8 @@
 <script lang="ts" setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import { useFeatureFlagsStore } from '../stores/featureFlags';
 import FeatureFlagsHeader, { type FeatureFlagFilterModel } from '../components/FeatureFlagsHeader.vue';
 import FeatureFlagModal from '../components/FeatureFlagModal.vue';
@@ -146,6 +164,7 @@ interface FeatureFlagFormData {
 }
 
 const featureFlagsStore = useFeatureFlagsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const addFeatureModal = ref(false);
 const currentFeature = ref<FeatureFlag | null>(null);
@@ -187,7 +206,10 @@ const filteredFeatures = computed(() => {
 });
 
 onMounted(async () => {
-    await featureFlagsStore.fetchFeatures();
+    await Promise.all([
+        featureFlagsStore.fetchFeatures(),
+        loadUserPermissions()
+    ]);
 });
 
 const addFeature = () => {
@@ -284,19 +306,9 @@ const deleteFeature = async (feature: FeatureFlag) => {
     }
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 </script>
 

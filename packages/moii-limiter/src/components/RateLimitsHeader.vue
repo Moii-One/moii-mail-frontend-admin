@@ -37,7 +37,7 @@
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search by identifier or config key..."
+                                placeholder="Search by identifier or package..."
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 :value="modelValue.search"
                                 @input="updateFilter('search', ($event.target as HTMLInputElement).value)"
@@ -48,14 +48,14 @@
                         </div>
                     </div>
 
-                    <!-- Config Key Filter -->
+                    <!-- Package Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Config Key</label>
+                        <label class="text-sm font-semibold mb-2 block">Package</label>
                         <CustomSelect
-                            :model-value="modelValue.configKey"
-                            :options="configKeyOptions"
-                            placeholder="All Config Keys"
-                            @update:model-value="updateFilter('configKey', $event)"
+                            :model-value="modelValue.package"
+                            :options="packageOptions"
+                            placeholder="All Packages"
+                            @update:model-value="updateFilter('package', $event)"
                         />
                     </div>
 
@@ -101,44 +101,42 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import VueCollapsible from 'vue-height-collapsible/vue3';
 import Swal from 'sweetalert2';
-import CustomSelect from './CustomSelect.vue';
 import { useRateLimitsStore } from '../stores/rateLimits';
+import CustomSelect from './CustomSelect.vue';
 import IconTrash from './icon/icon-trash.vue';
-import IconSearch from './icon/icon-search.vue';
 import IconMenu from './icon/icon-menu.vue';
 import IconCaretDown from './icon/icon-caret-down.vue';
+import IconSearch from './icon/icon-search.vue';
 import IconRefresh from './icon/icon-refresh.vue';
+import VueCollapsible from 'vue-height-collapsible/vue3';
 
 export interface RateLimitFilterModel {
     search: string;
-    configKey: string;
+    package: string;
     status: string;
     blocked: string;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     title: string;
     modelValue: RateLimitFilterModel;
-    availableConfigKeys: string[];
-}>();
+    availablePackages?: string[];
+}>(), {
+    availablePackages: () => []
+});
 
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: RateLimitFilterModel): void;
-}>();
+const emit = defineEmits(['update:modelValue']);
 
 const rateLimitsStore = useRateLimitsStore();
 const showFilters = ref(false);
 
-// Select options
-const configKeyOptions = computed(() => [
-    { value: '', label: 'All Config Keys' },
-    ...props.availableConfigKeys.map(key => ({
-        value: key,
-        label: key
-    }))
-]);
+const packageOptions = computed(() => {
+    return [
+        { value: '', label: 'All Packages' },
+        ...props.availablePackages.map(key => ({ value: key, label: key }))
+    ];
+});
 
 const statusOptions = [
     { value: '', label: 'All Statuses' },
@@ -148,60 +146,43 @@ const statusOptions = [
 
 const blockedOptions = [
     { value: '', label: 'All' },
-    { value: 'true', label: 'Blocked' },
-    { value: 'false', label: 'Not Blocked' }
+    { value: 'true', label: 'Yes' },
+    { value: 'false', label: 'No' }
 ];
 
-const updateFilter = (key: keyof RateLimitFilterModel, value: string) => {
-    emit('update:modelValue', {
-        ...props.modelValue,
-        [key]: value
-    });
+const updateFilter = (key: keyof RateLimitFilterModel, value: any) => {
+    emit('update:modelValue', { ...props.modelValue, [key]: value });
 };
 
 const clearFilters = () => {
     emit('update:modelValue', {
         search: '',
-        configKey: '',
+        package: '',
         status: '',
         blocked: ''
     });
 };
 
 const clearAllRateLimits = async () => {
-    const result = await Swal.fire({
-        icon: 'warning',
-        title: 'Clear All Rate Limits?',
-        text: 'This will clear all rate limits for the current config key. This action cannot be undone.',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, clear all!',
-        cancelButtonText: 'Cancel',
-        padding: '2em',
-        customClass: { container: 'sweet-alerts' },
-    });
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This will clear all rate limits for all packages. You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, clear them all!'
+        });
 
-    if (result.isConfirmed) {
-        try {
-            // Get the current config key from filters or use default
-            const configKey = props.modelValue.configKey || 'moii-localizations';
-            await rateLimitsStore.clearAllRateLimits(configKey);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'All rate limits have been cleared successfully.',
-                padding: '2em',
-                customClass: { container: 'sweet-alerts' },
-            });
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to clear rate limits.',
-                padding: '2em',
-                customClass: { container: 'sweet-alerts' },
-            });
+        if (result.isConfirmed) {
+            for (const pkg of props.availablePackages) {
+                await rateLimitsStore.clearAllRateLimits(pkg);
+            }
+            Swal.fire('Cleared!', 'All rate limits have been cleared.', 'success');
         }
+    } catch (error) {
+        Swal.fire('Error', 'Failed to clear all rate limits.', 'error');
     }
 };
 </script>

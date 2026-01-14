@@ -329,11 +329,11 @@
                                         </router-link>
                                     </li>
                                     <li class="border-t border-white-light dark:border-white-light/10">
-                                        <router-link to="/auth/boxed-signin" class="text-danger !py-3" @click="close()">
+                                        <a href="javascript:;" class="text-danger !py-3" @click="handleLogout">
                                             <icon-logout class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 rotate-90 shrink-0" />
 
                                             Sign Out
-                                        </router-link>
+                                        </a>
                                     </li>
                                 </ul>
                             </template>
@@ -863,11 +863,14 @@
 <script lang="ts" setup>
     import { ref, onMounted, computed, reactive, watch } from 'vue';
     import { useI18n } from 'vue-i18n';
+    import { useRouter } from 'vue-router';
+    import Swal from 'sweetalert2';
 
     import { toggleLanguage } from '@/config';
 
     import { useRoute } from 'vue-router';
     import { useAppStore } from '@/stores/index';
+    import { useAuthStore } from '../../../packages/moii-auth/src/stores/auth';
 
     import IconMenu from '@/components/icon/icon-menu.vue';
     import IconCalendar from '@/components/icon/icon-calendar.vue';
@@ -898,6 +901,8 @@
 
     const store = useAppStore();
     const route = useRoute();
+    const router = useRouter();
+    const authStore = useAuthStore();
     const search = ref(false);
 
     // multi language
@@ -997,5 +1002,25 @@
 
     const removeMessage = (value: number) => {
         messages.value = messages.value.filter((d) => d.id !== value);
+    };
+
+    const handleLogout = async () => {
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Sign Out?',
+            text: 'Are you sure you want to sign out?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, sign out',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            padding: '2em',
+            customClass: { container: 'sweet-alerts' },
+        });
+
+        if (result.isConfirmed) {
+            await authStore.logout();
+            router.push('/login');
+        }
     };
 </script>

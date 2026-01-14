@@ -104,13 +104,28 @@
                     </template>
                     <template #actions="data">
                         <div class="flex gap-2 items-center justify-center">
-                            <button type="button" class="btn btn-sm btn-outline-info" @click="duplicateSetting(data.value)">
+                            <button 
+                                v-if="hasPermission('settings.create')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-info" 
+                                @click="duplicateSetting(data.value)"
+                            >
                                 <icon-copy class="w-4 h-4" />
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @click="editSetting(data.value)">
+                            <button 
+                                v-if="hasPermission('settings.edit')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                @click="editSetting(data.value)"
+                            >
                                 <icon-edit class="w-4 h-4" />
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger" @click="deleteSetting(data.value)">
+                            <button 
+                                v-if="hasPermission('settings.delete')"
+                                type="button" 
+                                class="btn btn-sm btn-outline-danger" 
+                                @click="deleteSetting(data.value)"
+                            >
                                 <icon-trash class="w-4 h-4" />
                             </button>
                         </div>
@@ -132,6 +147,8 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import Swal from 'sweetalert2';
+import { useToast } from '../composables/useToast';
+import { usePermissions } from '../composables/usePermissions';
 import { useSettingsStore, type Setting } from '../stores/settings';
 import SettingsHeader, { type FilterModel } from '../components/SettingsHeader.vue';
 import SettingModal from '../components/SettingModal.vue';
@@ -145,6 +162,7 @@ import IconCopy from '../components/icon/icon-copy.vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 
 const settingsStore = useSettingsStore();
+const { hasPermission, loadUserPermissions } = usePermissions();
 
 const addSettingModal = ref(false);
 const currentSetting = ref<Setting | null>(null);
@@ -173,7 +191,10 @@ const availableGroups = computed(() => {
 });
 
 onMounted(async () => {
-    await settingsStore.fetchSettings();
+    await Promise.all([
+        settingsStore.fetchSettings(),
+        loadUserPermissions()
+    ]);
     applyFilters();
 });
 
@@ -323,19 +344,9 @@ const getTypeBadgeClass = (type: string): string => {
     return classes[type] || 'badge-outline-secondary';
 };
 
-const showMessage = (msg = '', type = 'success') => {
-    const toast: any = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 3000,
-        customClass: { container: 'toast' },
-    });
-    toast.fire({
-        icon: type,
-        title: msg,
-        padding: '10px 20px',
-    });
+const { showToast } = useToast();
+const showMessage = (msg = '', type: 'success' | 'error' = 'success') => {
+    showToast(msg, type);
 };
 
 const duplicateSetting = (setting: Setting) => {

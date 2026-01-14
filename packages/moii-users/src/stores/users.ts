@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
-import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
+import { getAuthHeaders as sharedGetAuthHeaders, fetchWithAuth } from '../../../moii-auth/src/utils/http';
 import config from '../../config.json';
 
 export interface User {
@@ -149,6 +149,8 @@ export const useUsersStore = defineStore('users', () => {
         search?: string;
         email?: string;
         company?: string;
+        tenant_id?: string;
+        app_id?: string;
         page?: number;
         per_page?: number;
     } = {}) {
@@ -159,12 +161,13 @@ export const useUsersStore = defineStore('users', () => {
             if (filters.search) queryParams.append('search', filters.search);
             if (filters.email) queryParams.append('email', filters.email);
             if (filters.company) queryParams.append('company', filters.company);
+            if (filters.tenant_id) queryParams.append('tenant_id', filters.tenant_id);
+            if (filters.app_id) queryParams.append('app_id', filters.app_id);
             if (filters.page) queryParams.append('page', filters.page.toString());
             if (filters.per_page) queryParams.append('per_page', filters.per_page.toString());
 
-            const response = await fetch(`${API_URL}/users?${queryParams}`, {
+            const response = await fetchWithAuth(`${API_URL}/users?${queryParams}`, {
                 method: 'GET',
-                headers: getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -178,10 +181,19 @@ export const useUsersStore = defineStore('users', () => {
                 throw new Error(errorMessage);
             }
 
-            const data: UsersResponse = await response.json();
-            users.value = data.users || [];
+            const data: any = await response.json();
+            // Handle both response formats: {users: [...]} and {data: [...], meta: {...}}
+            users.value = data.users || data.data || [];
             if (data.pagination) {
                 pagination.value = data.pagination;
+            } else if (data.meta) {
+                // Map 'meta' to 'pagination' format
+                pagination.value = {
+                    current_page: data.meta.current_page,
+                    per_page: data.meta.per_page,
+                    total: data.meta.total,
+                    last_page: data.meta.last_page
+                };
             }
             return data;
         } catch (err) {
@@ -249,11 +261,6 @@ export const useUsersStore = defineStore('users', () => {
             }
 
             const data: UsersResponse = await response.json();
-            // Update user in local state
-            const index = users.value.findIndex(user => user.uuid === uuid);
-            if (index !== -1 && data.user) {
-                users.value[index] = { ...users.value[index], ...data.user };
-            }
             return data;
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'An error occurred';
