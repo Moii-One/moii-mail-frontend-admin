@@ -6,14 +6,6 @@
                 <p class="text-white-dark text-sm mt-1">Manage email templates used across the platform</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    @click="showFilters = !showFilters"
-                >
-                    Filters
-                    <icon-caret-down class="ltr:ml-2 rtl:mr-2" :class="{ 'rotate-180': showFilters }" />
-                </button>
                 <router-link
                     v-if="canCreate"
                     to="/mail/templates/create"
@@ -22,6 +14,14 @@
                     <icon-plus class="ltr:mr-2 rtl:ml-2" />
                     Create Template
                 </router-link>
+                <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    @click="showFilters = !showFilters"
+                >
+                    Filters
+                    <icon-caret-down class="ltr:ml-2 rtl:mr-2" :class="{ 'rotate-180': showFilters }" />
+                </button>
             </div>
         </div>
 
@@ -139,6 +139,7 @@ const showFilters = ref(false);
 
 // Package options
 const packageOptions = [
+    { label: 'All Packages', value: '' },
     { label: 'Auth', value: 'auth' },
     { label: 'Notification', value: 'notification' },
     { label: 'System', value: 'system' }
@@ -146,12 +147,14 @@ const packageOptions = [
 
 // Status options
 const statusOptions = [
+    { label: 'All Statuses', value: '' },
     { label: 'Active', value: 'active' },
     { label: 'Inactive', value: 'inactive' }
 ];
 
 // Tag options
 const tagOptions = [
+    { label: 'All Tags', value: '' },
     { label: '2FA', value: '2fa' },
     { label: 'Password', value: 'password' },
     { label: 'Registration', value: 'registration' },

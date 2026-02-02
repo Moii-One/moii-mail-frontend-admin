@@ -5,6 +5,31 @@ All notable changes to the moii-mail frontend package will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-02-02
+
+### Fixed
+- **Templates.vue**: Fixed server-side pagination
+  - Added proper pagination props (`:pagination`, `:page`, `:pageSize`, `:pageSizeOptions`)
+  - Added pagination arrow icons
+  - Fixed context-aware filtering with contextStore watchers
+- **MailLogs.vue**: Fixed stats cards and pagination
+  - Stats cards now show 0 when no data instead of hiding
+  - Added proper pagination props
+  - Added context-aware filtering with contextStore watchers
+- **TemplatesHeader.vue**: Fixed filter defaults and button order
+  - Added "All Packages", "All Statuses", "All Tags" options with empty values
+  - Swapped "Create Template" and "Filters" button order
+  - Added CSS for dropdown z-index fixes
+- **MailLogsHeader.vue**: Fixed status filter and dropdown visibility
+  - Added "All Statuses" as default option
+  - Comprehensive CSS for multiselect z-index using `:deep()` and `:has()` pseudo-class
+- **templates.ts**: Changed default per_page from 15 to 10
+
+### Technical Details
+- Context watchers: `watch([() => contextStore.currentTenantUuid, () => contextStore.currentAppUuid])`
+- Headers automatically include X-Tenant-ID and X-App-ID from localStorage via `getAuthHeaders()`
+- Proper server-side pagination with all required props
+
 ## [1.3.0] - 2026-02-02
 
 ### Added

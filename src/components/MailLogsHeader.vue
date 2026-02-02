@@ -122,6 +122,7 @@ const showFilters = ref(false);
 
 // Status options
 const statusOptions = [
+    { label: 'All Statuses', value: '' },
     { label: 'Pending', value: 'pending' },
     { label: 'Sent', value: 'sent' },
     { label: 'Delivered', value: 'delivered' },
@@ -141,3 +142,56 @@ const clearFilters = () => {
     emit('update:modelValue', {});
 };
 </script>
+
+<style scoped>
+/* Force multiselect dropdowns to be visible above everything */
+:deep(.multiselect__content-wrapper) {
+    position: absolute !important;
+    z-index: 99999 !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    width: 100% !important;
+    min-width: 200px !important;
+    top: 100% !important;
+    left: 0 !important;
+    display: none !important; /* Hide by default */
+}
+
+/* Force the multiselect container to allow overflow */
+:deep(.multiselect) {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+/* Show dropdown only when multiselect is active */
+:deep(.multiselect--active .multiselect__content-wrapper) {
+    display: block !important;
+    position: absolute !important;
+    visibility: visible !important;
+}
+
+/* Aggressive overflow control for all parent containers */
+:deep(.multiselect--active),
+:deep([data-height-collapsible] .multiselect--active),
+:deep([data-height-collapsible] .panel .multiselect--active),
+:deep(.space-y-4 [data-height-collapsible] .multiselect--active) {
+    overflow: visible !important;
+}
+
+/* Ensure the entire collapsible allows overflow when any multiselect is active */
+:deep([data-height-collapsible]:has(.multiselect--active)) {
+    overflow: visible !important;
+}
+
+:deep([data-height-collapsible] .panel:has(.multiselect--active)) {
+    overflow: visible !important;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+</style>

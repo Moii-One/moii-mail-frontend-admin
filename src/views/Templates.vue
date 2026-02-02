@@ -15,8 +15,16 @@
                     :totalRows="pagination.total"
                     :loading="loading"
                     :sortable="true"
+                    :pagination="true"
+                    :page="pagination.current_page"
+                    :pageSize="pagination.per_page"
+                    :pageSizeOptions="[10, 25, 50, 100]"
                     @change="handleChange"
                     skin="whitespace-nowrap bh-table-hover"
+                    firstArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M13 19L7 12L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path opacity="0.5" d="M16.9998 19L10.9998 12L16.9998 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
+                    lastArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M11 19L17 12L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path opacity="0.5" d="M6.99976 19L12.9998 12L6.99976 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
+                    previousArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M15 5L9 12L15 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
+                    nextArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M9 5L15 12L9 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
                 >
                     <template #name="data">
                         <div class="font-semibold">{{ data.value.name }}</div>
@@ -101,6 +109,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useTemplatesStore } from '../stores/templates';
+import { useContextStore } from '../../../../packages/moii-users/src/stores/context';
 import { usePermissions } from '../../../../src/composables/usePermissions';
 import { useToast } from '../composables/useToast';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
@@ -114,6 +123,7 @@ import IconTrash from '../../../../src/components/icon/icon-trash.vue';
 import IconCopy from '../../../../src/components/icon/icon-copy.vue';
 
 const templatesStore = useTemplatesStore();
+const contextStore = useContextStore();
 const { hasPermission } = usePermissions();
 const { showToast } = useToast();
 
@@ -137,7 +147,7 @@ const cols = ref([
 ]);
 
 // Build API filters from UI filters
-function buildApiFilters(uiFilters: TemplatesFilterModel, page: number = 1, perPage: number = 15): any {
+function buildApiFilters(uiFilters: TemplatesFilterModel, page: number = 1, perPage: number = 10): any {
     const apiFilters: any = {
         page,
         per_page: perPage
@@ -177,6 +187,12 @@ watch(filters, async (newFilters) => {
     const apiFilters = buildApiFilters(newFilters, 1, pagination.value.per_page);
     await templatesStore.fetchTemplates(apiFilters);
 }, { deep: true });
+
+// Watch for tenant/app context changes and refetch data
+watch([() => contextStore.currentTenantUuid, () => contextStore.currentAppUuid], async () => {
+    const apiFilters = buildApiFilters(filters.value, 1, pagination.value.per_page);
+    await templatesStore.fetchTemplates(apiFilters);
+});
 
 const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -252,7 +268,7 @@ const confirmDelete = async (template: any) => {
 };
 
 onMounted(() => {
-    templatesStore.fetchTemplates();
+    templatesStore.fetchTemplates({ page: 1, per_page: 10 });
 });
 </script>
 

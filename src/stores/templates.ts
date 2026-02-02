@@ -24,7 +24,7 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
     const error = ref<string | null>(null);
     const pagination = ref<PaginationData>({
         current_page: 1,
-        per_page: 15,
+        per_page: 10,
         total: 0,
         last_page: 1
     });
