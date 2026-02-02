@@ -1,0 +1,6 @@
+{
+  "name": "moii-mail",
+  "version": "1.0.0",
+  "description": "Email template management and mail logs monitoring for moii platform",
+  "api_url": "http://localhost:8000/api/mail"
+}
