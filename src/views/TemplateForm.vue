@@ -262,10 +262,7 @@ import { useTemplatesStore } from '../stores/templates';
 import { useToast } from '../composables/useToast';
 import type { CreateTemplateData, MailTemplate } from '../types';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
-import IconArrowBackward from '../../../../src/components/icon/icon-arrow-backward.vue';
-import IconSave from '../../../../src/components/icon/icon-save.vue';
-import IconEye from '../../../../src/components/icon/icon-eye.vue';
-
+import { IconArrowBackward, IconEye, IconSave } from '../../../moii-ui/src/index';
 const route = useRoute();
 const router = useRouter();
 const templatesStore = useTemplatesStore();

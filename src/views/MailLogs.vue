@@ -1,9 +1,67 @@
 <template>
     <div>
-        <MailLogsHeader
+        <StandardHeader
             title="Mail Logs"
-            v-model="filters"
-        />
+            subtitle="Monitor email delivery status and track sent messages"
+            :navigation-links="navigationLinks"
+            :show-add-button="false"
+            :show-refresh="true"
+            :show-filters="true"
+            @refresh="refreshData"
+            @clear-filters="clearFilters"
+        >
+            <template #filters>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Search</label>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                placeholder="Search by email, subject..."
+                                class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
+                                v-model="filters.search"
+                            />
+                            <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
+                                <IconSearch class="mx-auto" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Status</label>
+                        <CustomSelect
+                            v-model="filters.status"
+                            :options="statusOptions"
+                            placeholder="All Statuses"
+                            :searchable="false"
+                            :allowEmpty="true"
+                        />
+                    </div>
+
+                    <!-- Date From -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Date From</label>
+                        <input
+                            type="date"
+                            class="form-input"
+                            v-model="filters.date_from"
+                        />
+                    </div>
+
+                    <!-- Date To -->
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Date To</label>
+                        <input
+                            type="date"
+                            class="form-input"
+                            v-model="filters.date_to"
+                        />
+                    </div>
+                </div>
+            </template>
+        </StandardHeader>
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-5">
@@ -144,19 +202,44 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useMailStore } from '../stores/mail';
 import { useContextStore } from '../../../../packages/moii-users/src/stores/context';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
-import MailLogsHeader from '../components/MailLogsHeader.vue';
-import type { MailLogsFilterModel } from '../components/MailLogsHeader.vue';
-import IconEye from '../../../../src/components/icon/icon-eye.vue';
-import IconMail from '../components/icon/icon-mail.vue';
-import IconCheckCircle from '../components/icon/icon-check-circle.vue';
-import IconSend from '../components/icon/icon-send.vue';
-import IconClock from '../components/icon/icon-clock.vue';
-import IconXCircle from '../components/icon/icon-x-circle.vue';
+import { StandardHeader, CustomSelect, IconCheckCircle, IconClock, IconEye, IconMail, IconSearch, IconSend, IconXCircle } from '../../../moii-ui/src/index';
 
 const mailStore = useMailStore();
 const contextStore = useContextStore();
 
+// Navigation links
+const navigationLinks = [
+    { to: '/mail/templates', label: 'Templates' },
+    { to: '/mail/logs', label: 'Logs' },
+];
+
+// Status options
+const statusOptions = [
+    { label: 'All Statuses', value: '' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Sent', value: 'sent' },
+    { label: 'Delivered', value: 'delivered' },
+    { label: 'Failed', value: 'failed' },
+    { label: 'Bounced', value: 'bounced' }
+];
+
+interface MailLogsFilterModel {
+    search?: string;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+}
+
 const filters = ref<MailLogsFilterModel>({});
+
+const clearFilters = () => {
+    filters.value = {};
+};
+
+const refreshData = async () => {
+    await mailStore.fetchMailLogs({ page: 1, per_page: pagination.value.per_page });
+    await mailStore.getStats();
+};
 
 const mailLogs = computed(() => mailStore.mailLogs);
 const loading = computed(() => mailStore.loading);
@@ -200,9 +283,34 @@ function buildApiFilters(uiFilters: MailLogsFilterModel, page: number = 1, perPa
 }
 
 // Handle changes from datatable (pagination, sorting, etc.)
-async function handleChange(data: any) {
-    const apiFilters = buildApiFilters(filters.value, data.current_page, data.pagesize);
-    await mailStore.fetchMailLogs(apiFilters);
+async function handleChange(event: any) {
+    let needsReload = false;
+
+    // Handle sorting
+    if (event.sort_column || event.sort_direction) {
+        const sortBy = event.sort_column || '';
+        const sortDirection = (event.sort_direction || 'asc').toLowerCase() as 'asc' | 'desc';
+        const columnMapping: Record<string, string> = {
+            'to_email': 'to_email',
+            'subject': 'subject',
+            'status': 'status',
+            'priority': 'priority',
+            'created_at': 'created_at',
+        };
+        const backendField = columnMapping[sortBy] || sortBy;
+        mailStore.updateSorting(backendField, sortDirection);
+        needsReload = true;
+    }
+
+    // Handle pagination
+    if (event.current_page || event.pagesize) {
+        needsReload = true;
+    }
+
+    if (needsReload) {
+        const apiFilters = buildApiFilters(filters.value, event.current_page, event.pagesize);
+        await mailStore.fetchMailLogs(apiFilters);
+    }
 }
 
 // Watch filters and apply them
@@ -252,13 +360,5 @@ onMounted(async () => {
     padding-right: 1rem;
 }
 
-/* Fix multiselect dropdown z-index */
-.custom-multiselect-wrapper {
-    position: relative;
-    z-index: 50;
-}
 
-.custom-multiselect .multiselect__content-wrapper {
-    z-index: 100 !important;
-}
 </style>

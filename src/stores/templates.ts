@@ -28,6 +28,7 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
         total: 0,
         last_page: 1
     });
+    const sorting = ref({ sort_by: 'name', sort_direction: 'asc' as 'asc' | 'desc' });
 
     // Computed
     const activeTemplates = computed(() => 
@@ -70,6 +71,10 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
             if (filters?.tags) filters.tags.forEach(tag => params.append('tags[]', tag));
             if (filters?.page) params.append('page', String(filters.page));
             if (filters?.per_page) params.append('per_page', String(filters.per_page));
+
+            // Add sorting params
+            params.append('sort_by', sorting.value.sort_by);
+            params.append('sort_direction', sorting.value.sort_direction);
 
             const queryString = params.toString();
             const url = `${config.api_url}/templates${queryString ? '?' + queryString : ''}`;
@@ -390,6 +395,11 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
         }
     };
 
+    const updateSorting = (sort_by: string, sort_direction: 'asc' | 'desc') => {
+        sorting.value.sort_by = sort_by;
+        sorting.value.sort_direction = sort_direction;
+    };
+
     return {
         // State
         templates,
@@ -397,6 +407,7 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
         loading,
         error,
         pagination,
+        sorting,
         
         // Computed
         activeTemplates,
@@ -411,6 +422,7 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
         duplicateTemplate,
         previewTemplate,
         testTemplate,
-        getTemplateVariables
+        getTemplateVariables,
+        updateSorting
     };
 });

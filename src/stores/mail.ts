@@ -27,6 +27,7 @@ export const useMailStore = defineStore('mail', () => {
         total: 0,
         last_page: 1
     });
+    const sorting = ref({ sort_by: 'created_at', sort_direction: 'desc' as 'asc' | 'desc' });
 
     // Computed
     const sentMails = computed(() => 
@@ -80,6 +81,10 @@ export const useMailStore = defineStore('mail', () => {
             if (filters?.date_to) params.append('date_to', filters.date_to);
             if (filters?.page) params.append('page', String(filters.page));
             if (filters?.per_page) params.append('per_page', String(filters.per_page));
+
+            // Add sorting params
+            params.append('sort_by', sorting.value.sort_by);
+            params.append('sort_direction', sorting.value.sort_direction);
 
             const queryString = params.toString();
             const url = `${config.api_url}/logs${queryString ? '?' + queryString : ''}`;
@@ -218,6 +223,11 @@ export const useMailStore = defineStore('mail', () => {
         }
     };
 
+    const updateSorting = (sort_by: string, sort_direction: 'asc' | 'desc') => {
+        sorting.value.sort_by = sort_by;
+        sorting.value.sort_direction = sort_direction;
+    };
+
     return {
         // State
         mailLogs,
@@ -226,6 +236,7 @@ export const useMailStore = defineStore('mail', () => {
         error,
         stats,
         pagination,
+        sorting,
         
         // Computed
         sentMails,
@@ -237,6 +248,7 @@ export const useMailStore = defineStore('mail', () => {
         fetchMailLogs,
         getMailLog,
         getStats,
-        retryMail
+        retryMail,
+        updateSorting
     };
 });
