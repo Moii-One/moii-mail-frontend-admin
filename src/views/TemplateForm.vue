@@ -259,7 +259,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTemplatesStore } from '../stores/templates';
-import { useToast } from '../composables/useToast';
+import { useToast } from '../../../moii-ui/src/index';
 import type { CreateTemplateData, MailTemplate } from '../types';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
 import { IconArrowBackward, IconEye, IconSave } from '../../../moii-ui/src/index';

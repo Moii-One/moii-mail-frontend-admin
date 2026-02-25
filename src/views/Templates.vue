@@ -214,7 +214,7 @@ import Swal from 'sweetalert2';
 import { useTemplatesStore } from '../stores/templates';
 import { useContextStore } from '../../../../packages/moii-users/src/stores/context';
 import { usePermissions } from '../../../../src/composables/usePermissions';
-import { useToast } from '../composables/useToast';
+import { useToast } from '../../../moii-ui/src/index';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
 import type { MailTemplate } from '../types';
