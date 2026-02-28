@@ -6,18 +6,18 @@
                 <router-link 
                     to="/mail/templates" 
                     class="btn btn-outline-primary"
-                    title="Back to Templates"
+                    :title="t('mail.templates.back_to_templates')"
                 >
                     <icon-arrow-backward class="w-5 h-5" />
                 </router-link>
                 <div>
                     <h5 class="font-semibold text-lg dark:text-white-light">
-                        {{ isEditMode ? 'Edit' : 'Create' }} Email Template
+                        {{ isEditMode ? t('mail.templates.edit') : t('mail.templates.create_title') }}
                     </h5>
                     <div class="flex items-center gap-2 text-sm text-white-dark mt-1">
-                        <router-link to="/mail/templates" class="hover:text-primary">Email Templates</router-link>
+                        <router-link to="/mail/templates" class="hover:text-primary">{{ t('mail.templates.title') }}</router-link>
                         <span>/</span>
-                        <span>{{ isEditMode ? 'Edit' : 'Create' }}</span>
+                        <span>{{ isEditMode ? t('mail.actions.edit') : t('mail.actions.create') }}</span>
                     </div>
                 </div>
             </div>
@@ -28,10 +28,10 @@
                     class="btn btn-outline-secondary"
                 >
                     <icon-eye class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Preview
+                    {{ t('mail.actions.preview') }}
                 </button>
                 <router-link to="/mail/templates" class="btn btn-outline-danger">
-                    Cancel
+                    {{ t('mail.actions.cancel') }}
                 </router-link>
                 <button 
                     type="button" 
@@ -41,7 +41,7 @@
                 >
                     <span v-if="templatesStore.loading" class="inline-block w-4 h-4 border-2 border-white border-l-transparent rounded-full animate-spin ltr:mr-2 rtl:ml-2"></span>
                     <icon-save class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    {{ isEditMode ? 'Update' : 'Create' }}
+                    {{ isEditMode ? t('mail.actions.update') : t('mail.actions.create') }}
                 </button>
             </div>
         </div>
@@ -52,26 +52,26 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- Name -->
                     <div>
-                        <label for="name" class="block mb-1">Template Name <span class="text-danger">*</span></label>
+                        <label for="name" class="block mb-1">{{ t('mail.form.template_name') }} <span class="text-danger">*</span></label>
                         <input
                             id="name"
                             v-model="form.name"
                             type="text"
                             class="form-input"
-                            placeholder="e.g., Welcome Email"
+                            :placeholder="t('mail.form.template_name_placeholder')"
                             required
                         />
                     </div>
 
                     <!-- Slug -->
                     <div>
-                        <label for="slug" class="block mb-1">Slug <span class="text-danger">*</span></label>
+                        <label for="slug" class="block mb-1">{{ t('mail.form.slug') }} <span class="text-danger">*</span></label>
                         <input
                             id="slug"
                             v-model="form.slug"
                             type="text"
                             class="form-input"
-                            placeholder="e.g., welcome-email"
+                            :placeholder="t('mail.form.slug_placeholder')"
                             required
                         />
                     </div>
@@ -79,60 +79,60 @@
 
                 <!-- Subject -->
                 <div>
-                    <label for="subject" class="block mb-1">Email Subject <span class="text-danger">*</span></label>
+                    <label for="subject" class="block mb-1">{{ t('mail.form.email_subject') }} <span class="text-danger">*</span></label>
                     <input
                         id="subject"
                         v-model="form.subject"
                         type="text"
                         class="form-input"
-                        placeholder="e.g., Welcome to {{ app_name }}"
+                        :placeholder="t('mail.form.email_subject_placeholder')"
                         required
                     />
                 </div>
 
                 <!-- HTML Content -->
                 <div>
-                    <label for="content_html" class="block mb-1">HTML Content</label>
+                    <label for="content_html" class="block mb-1">{{ t('mail.form.html_content') }}</label>
                     <textarea
                         id="content_html"
                         v-model="form.content_html"
                         rows="10"
                         class="form-textarea font-mono text-sm"
-                        placeholder="Enter HTML email content..."
+                        :placeholder="t('mail.form.html_content_placeholder')"
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Use &#123;&#123; variable_name &#125;&#125; or &#123;&#123; $object-&gt;property &#125;&#125; for template variables</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ t('mail.form.html_content_hint') }}</p>
                 </div>
 
                 <!-- CSS Styles -->
                 <div>
-                    <label for="css" class="block mb-1">CSS Styles</label>
+                    <label for="css" class="block mb-1">{{ t('mail.form.css_styles') }}</label>
                     <textarea
                         id="css"
                         v-model="form.css"
                         rows="6"
                         class="form-textarea font-mono text-sm"
-                        placeholder="Enter CSS styles (will be injected in <style> tag)..."
+                        :placeholder="t('mail.form.css_styles_placeholder')"
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1">CSS will be embedded in the email's &lt;head&gt; section</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ t('mail.form.css_styles_hint') }}</p>
                 </div>
 
                 <!-- Plain Text Content -->
                 <div>
-                    <label for="content_text" class="block mb-1">Plain Text Content</label>
+                    <label for="content_text" class="block mb-1">{{ t('mail.form.plain_text') }}</label>
                     <textarea
                         id="content_text"
                         v-model="form.content_text"
                         rows="8"
                         class="form-textarea"
-                        placeholder="Enter plain text email content..."
+                        :placeholder="t('mail.form.plain_text_placeholder')"
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Fallback for email clients that don't support HTML</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ t('mail.form.plain_text_hint') }}</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- From Email -->
                     <div>
-                        <label for="from_email" class="block mb-1">From Email</label>
+                        <label for="from_email" class="block mb-1">{{ t('mail.form.from_email') }}</label>
                         <input
                             id="from_email"
                             v-model="form.from_email"
@@ -144,7 +144,7 @@
 
                     <!-- From Name -->
                     <div>
-                        <label for="from_name" class="block mb-1">From Name</label>
+                        <label for="from_name" class="block mb-1">{{ t('mail.form.from_name') }}</label>
                         <input
                             id="from_name"
                             v-model="form.from_name"
@@ -158,7 +158,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- Reply To Email -->
                     <div>
-                        <label for="reply_to_email" class="block mb-1">Reply-To Email</label>
+                        <label for="reply_to_email" class="block mb-1">{{ t('mail.form.reply_to_email') }}</label>
                         <input
                             id="reply_to_email"
                             v-model="form.reply_to_email"
@@ -170,7 +170,7 @@
 
                     <!-- Reply To Name -->
                     <div>
-                        <label for="reply_to_name" class="block mb-1">Reply-To Name</label>
+                        <label for="reply_to_name" class="block mb-1">{{ t('mail.form.reply_to_name') }}</label>
                         <input
                             id="reply_to_name"
                             v-model="form.reply_to_name"
@@ -183,12 +183,12 @@
 
                 <!-- Tags -->
                 <div>
-                    <label class="block mb-1">Tags</label>
+                    <label class="block mb-1">{{ t('mail.form.tags') }}</label>
                     <input
                         v-model="newTag"
                         type="text"
                         class="form-input"
-                        placeholder="Add tag and press Enter"
+                        :placeholder="t('mail.form.tags_placeholder')"
                         @keydown.enter.prevent="addTag"
                     />
                     <div v-if="form.tags && form.tags.length > 0" class="flex flex-wrap gap-2 mt-2">
@@ -211,24 +211,24 @@
 
                 <!-- Variables (for documentation and testing) -->
                 <div>
-                    <label for="variables" class="block mb-1">Template Variables (JSON)</label>
+                    <label for="variables" class="block mb-1">{{ t('mail.form.variables') }}</label>
                     <textarea
                         id="variables"
                         v-model="variablesJson"
                         rows="4"
                         class="form-textarea font-mono text-xs"
-                        placeholder='{\n  "user_name": "User full name",\n  "code": "Verification code",\n  "app_name": "Application name"\n}'
+                        :placeholder="t('mail.form.variables_placeholder')"
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Define variables that can be used in this template (e.g., {{ user_name }}). Used for documentation and testing.</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ t('mail.form.variables_hint') }}</p>
                 </div>
 
                 <!-- Version Display (read-only) -->
                 <div v-if="isEditMode">
-                    <label class="block mb-1">Template Version</label>
+                    <label class="block mb-1">{{ t('mail.form.version') }}</label>
                     <div class="form-input bg-gray-100 dark:bg-gray-800 cursor-not-allowed">
                         Version {{ templatesStore.currentTemplate?.version || 1 }}
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Version is automatically incremented on each update</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ t('mail.form.version_hint') }}</p>
                 </div>
 
                 <!-- Active Status -->
@@ -239,7 +239,7 @@
                             v-model="form.is_active"
                             class="form-checkbox"
                         />
-                        <span class="ltr:ml-2 rtl:mr-2">Active (template is ready to use)</span>
+                        <span class="ltr:ml-2 rtl:mr-2">{{ t('mail.form.is_active') }}</span>
                     </label>
                 </div>
 
@@ -257,16 +257,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useTemplatesStore } from '../stores/templates';
 import { useToast } from '../../../moii-ui/src/index';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 import type { CreateTemplateData, MailTemplate } from '../types';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
 import { IconArrowBackward, IconEye, IconSave } from '../../../moii-ui/src/index';
-const route = useRoute();
 const router = useRouter();
 const templatesStore = useTemplatesStore();
 const { showToast } = useToast();
+const { t } = useI18n();
 
 const showPreviewModal = ref(false);
 
@@ -358,7 +359,7 @@ const handleSubmit = async () => {
             try {
                 variables = JSON.parse(variablesJson.value);
             } catch (e) {
-                showToast('Invalid JSON in variables field', 'error');
+                showToast(t('mail.messages.invalid_json'), 'error');
                 return;
             }
         }
@@ -370,15 +371,15 @@ const handleSubmit = async () => {
 
         if (isEditMode.value && props.id) {
             await templatesStore.updateTemplate(props.id, submitData);
-            showToast('Template updated successfully', 'success');
+            showToast(t('mail.messages.updated'), 'success');
         } else {
             await templatesStore.createTemplate(submitData);
-            showToast('Template created successfully', 'success');
+            showToast(t('mail.messages.created'), 'success');
         }
         router.push('/mail/templates');
     } catch (error) {
         console.error('Error saving template:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to save template';
+        const errorMessage = error instanceof Error ? error.message : t('mail.messages.save_failed');
         showToast(errorMessage, 'error');
     }
 };

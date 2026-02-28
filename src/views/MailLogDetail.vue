@@ -2,21 +2,21 @@
     <div>
         <div class="panel">
             <div class="mb-5 flex items-center justify-between">
-                <h5 class="text-lg font-semibold dark:text-white-light">Mail Log Details</h5>
+                <h5 class="text-lg font-semibold dark:text-white-light">{{ t('mail.logs.details') }}</h5>
                 <router-link to="/mail/logs" class="btn btn-outline-secondary">
-                    Back to Logs
+                    {{ t('mail.logs.back') }}
                 </router-link>
             </div>
 
             <div class="mb-5">
                 <p class="text-center text-gray-500">
-                    📧 Email Details
+                    📧 {{ t('mail.logs.email_details') }}
                 </p>
                 <p class="text-center text-sm text-gray-400 mt-2">
-                    Detailed view of sent email with tracking information.
+                    {{ t('mail.logs.details_desc') }}
                 </p>
                 <p class="text-center text-sm text-gray-400">
-                    Implementation in progress - Phase 2
+                    {{ t('mail.logs.in_progress') }} - Phase 2
                 </p>
             </div>
 
@@ -40,12 +40,14 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useMailStore } from '../stores/mail';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 
 const props = defineProps<{
     id: string;
 }>();
 
 const mailStore = useMailStore();
+const { t } = useI18n();
 
 onMounted(async () => {
     if (props.id) {

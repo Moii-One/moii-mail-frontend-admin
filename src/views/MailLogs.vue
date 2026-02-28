@@ -1,8 +1,8 @@
 <template>
     <div>
         <StandardHeader
-            title="Mail Logs"
-            subtitle="Monitor email delivery status and track sent messages"
+            :title="t('mail.logs.title')"
+            :subtitle="t('mail.logs.subtitle')"
             :navigation-links="navigationLinks"
             :show-add-button="false"
             :show-refresh="true"
@@ -14,11 +14,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Search</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.search') }}</label>
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search by email, subject..."
+                                :placeholder="t('mail.filters.search_logs')"
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 v-model="filters.search"
                             />
@@ -30,11 +30,11 @@
 
                     <!-- Status Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Status</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.status') }}</label>
                         <CustomSelect
                             v-model="filters.status"
                             :options="statusOptions"
-                            placeholder="All Statuses"
+                            :placeholder="t('mail.filters.all_statuses')"
                             :searchable="false"
                             :allowEmpty="true"
                         />
@@ -42,7 +42,7 @@
 
                     <!-- Date From -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Date From</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.date_from') }}</label>
                         <input
                             type="date"
                             class="form-input"
@@ -52,7 +52,7 @@
 
                     <!-- Date To -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Date To</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.date_to') }}</label>
                         <input
                             type="date"
                             class="form-input"
@@ -74,7 +74,7 @@
                     </div>
                     <div class="ltr:ml-3 rtl:mr-3">
                         <h3 class="text-xl font-semibold">{{ stats?.total ?? 0 }}</h3>
-                        <p class="text-white-dark text-sm">Total Emails</p>
+                        <p class="text-white-dark text-sm">{{ t('mail.stats.total') }}</p>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
                     </div>
                     <div class="ltr:ml-3 rtl:mr-3">
                         <h3 class="text-xl font-semibold">{{ stats?.delivered ?? 0 }}</h3>
-                        <p class="text-white-dark text-sm">Delivered</p>
+                        <p class="text-white-dark text-sm">{{ t('mail.stats.delivered') }}</p>
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@
                     </div>
                     <div class="ltr:ml-3 rtl:mr-3">
                         <h3 class="text-xl font-semibold">{{ stats?.sent ?? 0 }}</h3>
-                        <p class="text-white-dark text-sm">Sent</p>
+                        <p class="text-white-dark text-sm">{{ t('mail.stats.sent') }}</p>
                     </div>
                 </div>
             </div>
@@ -113,7 +113,7 @@
                     </div>
                     <div class="ltr:ml-3 rtl:mr-3">
                         <h3 class="text-xl font-semibold">{{ stats?.pending ?? 0 }}</h3>
-                        <p class="text-white-dark text-sm">Pending</p>
+                        <p class="text-white-dark text-sm">{{ t('mail.stats.pending') }}</p>
                     </div>
                 </div>
             </div>
@@ -126,7 +126,7 @@
                     </div>
                     <div class="ltr:ml-3 rtl:mr-3">
                         <h3 class="text-xl font-semibold">{{ stats?.failed ?? 0 }}</h3>
-                        <p class="text-white-dark text-sm">Failed</p>
+                        <p class="text-white-dark text-sm">{{ t('mail.stats.failed') }}</p>
                     </div>
                 </div>
             </div>
@@ -201,27 +201,29 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useMailStore } from '../stores/mail';
 import { useContextStore } from '../../../../packages/moii-users/src/stores/context';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import { StandardHeader, CustomSelect, IconCheckCircle, IconClock, IconEye, IconMail, IconSearch, IconSend, IconXCircle } from '../../../moii-ui/src/index';
 
 const mailStore = useMailStore();
 const contextStore = useContextStore();
+const { t } = useI18n();
 
 // Navigation links
-const navigationLinks = [
-    { to: '/mail/templates', label: 'Templates' },
-    { to: '/mail/logs', label: 'Logs' },
-];
+const navigationLinks = computed(() => [
+    { to: '/mail/templates', label: t('mail.nav.templates') },
+    { to: '/mail/logs', label: t('mail.nav.logs') },
+]);
 
 // Status options
-const statusOptions = [
-    { label: 'All Statuses', value: '' },
-    { label: 'Pending', value: 'pending' },
-    { label: 'Sent', value: 'sent' },
-    { label: 'Delivered', value: 'delivered' },
-    { label: 'Failed', value: 'failed' },
-    { label: 'Bounced', value: 'bounced' }
-];
+const statusOptions = computed(() => [
+    { label: t('mail.filters.all_statuses'), value: '' },
+    { label: t('mail.status.pending'), value: 'pending' },
+    { label: t('mail.status.sent'), value: 'sent' },
+    { label: t('mail.status.delivered'), value: 'delivered' },
+    { label: t('mail.status.failed'), value: 'failed' },
+    { label: t('mail.status.bounced'), value: 'bounced' }
+]);
 
 interface MailLogsFilterModel {
     search?: string;
@@ -247,13 +249,13 @@ const pagination = computed(() => mailStore.pagination);
 const stats = computed(() => mailStore.stats);
 
 // Table columns
-const cols = ref([
-    { field: 'to_email', title: 'Recipient', width: '200px' },
-    { field: 'subject', title: 'Subject', width: '250px' },
-    { field: 'status', title: 'Status', width: '100px' },
-    { field: 'priority', title: 'Priority', width: '100px' },
-    { field: 'created_at', title: 'Date', width: '150px' },
-    { field: 'actions', title: 'Actions', width: '80px', sort: false },
+const cols = computed(() => [
+    { field: 'to_email', title: t('mail.table.recipient'), width: '200px' },
+    { field: 'subject', title: t('mail.table.subject'), width: '250px' },
+    { field: 'status', title: t('mail.table.status'), width: '100px' },
+    { field: 'priority', title: t('mail.table.priority'), width: '100px' },
+    { field: 'created_at', title: t('mail.table.date'), width: '150px' },
+    { field: 'actions', title: t('mail.table.actions'), width: '80px', sort: false },
 ]);
 
 // Build API filters from UI filters

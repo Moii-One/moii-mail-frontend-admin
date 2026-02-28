@@ -2,8 +2,8 @@
     <StandardModal
         ref="modalRef"
         :show="show"
-        title="Template Preview"
-        description="Preview email template with test variables"
+        :title="t('mail.preview.title')"
+        :description="t('mail.preview.description')"
         size="xl"
         @close="closeModal"
     >
@@ -12,10 +12,10 @@
             <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                        <span class="font-semibold">Template:</span> {{ template?.name }}
+                        <span class="font-semibold">{{ t('mail.preview.template') }}</span> {{ template?.name }}
                     </div>
                     <div>
-                        <span class="font-semibold">Subject:</span> {{ renderedSubject }}
+                        <span class="font-semibold">{{ t('mail.preview.subject') }}</span> {{ renderedSubject }}
                     </div>
                 </div>
             </div>
@@ -23,13 +23,13 @@
             <!-- Variables Section (if available) -->
             <div v-if="hasVariables" class="mb-4">
                 <div class="flex items-center justify-between mb-2">
-                    <label class="font-semibold text-sm">Test Variables:</label>
+                    <label class="font-semibold text-sm">{{ t('mail.preview.test_variables') }}</label>
                     <button
                         type="button"
                         class="btn btn-sm btn-outline-primary"
                         @click="showVariablesEditor = !showVariablesEditor"
                     >
-                        {{ showVariablesEditor ? 'Hide' : 'Edit' }} Variables
+                        {{ showVariablesEditor ? t('mail.preview.hide_variables') : t('mail.preview.edit_variables') }}
                     </button>
                 </div>
 
@@ -45,7 +45,7 @@
                         class="btn btn-sm btn-primary mt-2"
                         @click="updatePreview"
                     >
-                        Update Preview
+                        {{ t('mail.preview.update_preview') }}
                     </button>
                 </div>
 
@@ -63,7 +63,7 @@
             <!-- HTML Preview -->
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div class="bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm font-semibold border-b border-gray-200 dark:border-gray-700">
-                    HTML Preview
+                    {{ t('mail.preview.html_preview') }}
                 </div>
                 <div class="p-4 bg-white dark:bg-gray-900 overflow-auto" style="max-height: 500px;">
                     <iframe
@@ -78,7 +78,7 @@
             <!-- Plain Text Preview (if available) -->
             <div v-if="template?.content_text" class="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div class="bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm font-semibold border-b border-gray-200 dark:border-gray-700">
-                    Plain Text Preview
+                    {{ t('mail.preview.plain_text_preview') }}
                 </div>
                 <div class="p-4 bg-white dark:bg-gray-900">
                     <pre class="text-sm whitespace-pre-wrap font-mono">{{ renderedText }}</pre>
@@ -89,7 +89,7 @@
         <!-- Footer -->
         <template #footer>
             <button type="button" @click="closeModal" class="btn btn-outline-danger">
-                Close
+                {{ t('mail.actions.close') }}
             </button>
         </template>
     </StandardModal>
@@ -99,6 +99,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import type { MailTemplate } from '../types';
 import { StandardModal } from '../../../moii-ui/src/index';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 
 interface Props {
     show: boolean;
@@ -109,6 +110,8 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
     (e: 'close'): void;
 }>();
+
+const { t } = useI18n();
 
 const previewFrame = ref<HTMLIFrameElement | null>(null);
 const showVariablesEditor = ref(false);
@@ -188,7 +191,7 @@ function updatePreview() {
         showVariablesEditor.value = false;
         renderPreview();
     } catch (e) {
-        alert('Invalid JSON format');
+        alert(t('mail.preview.invalid_json'));
     }
 }
 

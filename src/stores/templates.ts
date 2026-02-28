@@ -129,8 +129,9 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
             const result: TemplatesResponse = await response.json();
             
             if (result.success && result.data) {
-                currentTemplate.value = result.data;
-                return result.data;
+                const template = result.data as MailTemplate;
+                currentTemplate.value = template;
+                return template;
             } else {
                 throw new Error(result.message || 'Failed to fetch template');
             }
@@ -166,8 +167,9 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
             const result: TemplatesResponse = await response.json();
             
             if (result.success && result.data) {
-                templates.value.unshift(result.data);
-                return result.data;
+                const template = result.data as MailTemplate;
+                templates.value.unshift(template);
+                return template;
             } else {
                 throw new Error(result.message || 'Failed to create template');
             }
@@ -203,14 +205,15 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
             const result: TemplatesResponse = await response.json();
             
             if (result.success && result.data) {
-                const index = templates.value.findIndex(t => t.id === result.data!.id);
+                const template = result.data as MailTemplate;
+                const index = templates.value.findIndex(t => t.id === template.id);
                 if (index !== -1) {
-                    templates.value[index] = result.data;
+                    templates.value[index] = template;
                 }
-                if (currentTemplate.value?.id === result.data.id) {
-                    currentTemplate.value = result.data;
+                if (currentTemplate.value?.id === template.id) {
+                    currentTemplate.value = template;
                 }
-                return result.data;
+                return template;
             } else {
                 throw new Error(result.message || 'Failed to update template');
             }
@@ -277,9 +280,10 @@ export const useTemplatesStore = defineStore('mailTemplates', () => {
 
             const result: TemplatesResponse = await response.json();
             
-            if (result.success && result.template) {
-                templates.value.unshift(result.template);
-                return result.template;
+            if (result.success && result.data) {
+                const template = result.data as MailTemplate;
+                templates.value.unshift(template);
+                return template;
             } else {
                 throw new Error(result.message || 'Failed to duplicate template');
             }

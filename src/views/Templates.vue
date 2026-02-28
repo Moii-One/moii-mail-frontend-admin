@@ -1,11 +1,11 @@
 <template>
     <div>
         <StandardHeader
-            title="Email Templates"
-            subtitle="Manage email templates used across the platform"
+            :title="t('mail.templates.title')"
+            :subtitle="t('mail.templates.subtitle')"
             :navigation-links="navigationLinks"
             :show-add-button="hasPermission('mail.templates.create')"
-            add-button-text="Create Template"
+            :add-button-text="t('mail.templates.create')"
             add-button-route="/mail/templates/create"
             :show-refresh="true"
             :show-filters="true"
@@ -16,18 +16,18 @@
                 <button v-if="selectedItems.length > 0 && hasPermission('mail.templates.delete')"
                     type="button" class="btn btn-danger" @click="deleteSelectedItems">
                     <IconTrash class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                    Delete Selected ({{ selectedItems.length }})
+                    {{ t('mail.templates.delete_selected') }} ({{ selectedItems.length }})
                 </button>
             </template>
             <template #filters>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Search</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.search') }}</label>
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search templates..."
+                                :placeholder="t('mail.filters.search_templates')"
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 v-model="filters.search"
                             />
@@ -39,11 +39,11 @@
 
                     <!-- Package Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Package</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.package') }}</label>
                         <CustomSelect
                             v-model="filters.package"
                             :options="packageOptions"
-                            placeholder="All Packages"
+                            :placeholder="t('mail.filters.all_packages')"
                             :searchable="false"
                             :allowEmpty="true"
                         />
@@ -51,11 +51,11 @@
 
                     <!-- Status Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Status</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.status') }}</label>
                         <CustomSelect
                             v-model="filters.status"
                             :options="statusOptions"
-                            placeholder="All Status"
+                            :placeholder="t('mail.filters.all_statuses')"
                             :searchable="false"
                             :allowEmpty="true"
                         />
@@ -63,11 +63,11 @@
 
                     <!-- Tag Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Tag</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.tag') }}</label>
                         <CustomSelect
                             v-model="filters.tag"
                             :options="tagOptions"
-                            placeholder="All Tags"
+                            :placeholder="t('mail.filters.all_tags')"
                             :searchable="true"
                             :allowEmpty="true"
                         />
@@ -142,7 +142,7 @@
                             class="badge"
                             :class="data.value.is_active ? 'badge-outline-success' : 'badge-outline-danger'"
                         >
-                            {{ data.value.is_active ? 'Active' : 'Inactive' }}
+                            {{ data.value.is_active ? t('mail.status.active') : t('mail.status.inactive') }}
                         </span>
                     </template>
                     <template #updated_at="data">
@@ -189,11 +189,11 @@
             <div v-else class="panel">
                 <div class="flex flex-col items-center justify-center py-12">
                     <IconDocument class="w-16 h-16 text-gray-400 mb-4" />
-                    <h3 class="text-lg font-semibold mb-2">No templates found</h3>
-                    <p class="text-gray-500 mb-4">Create your first email template to get started.</p>
+                    <h3 class="text-lg font-semibold mb-2">{{ t('mail.empty.title') }}</h3>
+                    <p class="text-gray-500 mb-4">{{ t('mail.empty.hint') }}</p>
                     <router-link v-if="hasPermission('mail.templates.create')" to="/mail/templates/create" class="btn btn-primary">
                         <IconPlus class="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                        Create Template
+                        {{ t('mail.templates.create') }}
                     </router-link>
                 </div>
             </div>
@@ -215,6 +215,7 @@ import { useTemplatesStore } from '../stores/templates';
 import { useContextStore } from '../../../../packages/moii-users/src/stores/context';
 import { usePermissions } from '../../../../src/composables/usePermissions';
 import { useToast } from '../../../moii-ui/src/index';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
 import type { MailTemplate } from '../types';
@@ -224,40 +225,41 @@ const templatesStore = useTemplatesStore();
 const contextStore = useContextStore();
 const { hasPermission } = usePermissions();
 const { showToast } = useToast();
+const { t } = useI18n();
 
 // Navigation links
-const navigationLinks = [
-    { to: '/mail/templates', label: 'Templates' },
-    { to: '/mail/logs', label: 'Logs' },
-];
+const navigationLinks = computed(() => [
+    { to: '/mail/templates', label: t('mail.nav.templates') },
+    { to: '/mail/logs', label: t('mail.nav.logs') },
+]);
 
 // Package options
-const packageOptions = [
-    { label: 'All Packages', value: '' },
-    { label: 'Auth', value: 'auth' },
-    { label: 'Notification', value: 'notification' },
-    { label: 'System', value: 'system' }
-];
+const packageOptions = computed(() => [
+    { label: t('mail.filters.all_packages'), value: '' },
+    { label: t('mail.packages.auth'), value: 'auth' },
+    { label: t('mail.packages.notification'), value: 'notification' },
+    { label: t('mail.packages.system'), value: 'system' }
+]);
 
 // Status options
-const statusOptions = [
-    { label: 'All Statuses', value: '' },
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' }
-];
+const statusOptions = computed(() => [
+    { label: t('mail.filters.all_statuses'), value: '' },
+    { label: t('mail.status.active'), value: 'active' },
+    { label: t('mail.status.inactive'), value: 'inactive' }
+]);
 
 // Tag options
-const tagOptions = [
-    { label: 'All Tags', value: '' },
-    { label: '2FA', value: '2fa' },
-    { label: 'Password', value: 'password' },
-    { label: 'Registration', value: 'registration' },
-    { label: 'Welcome', value: 'welcome' },
-    { label: 'Reset', value: 'reset' },
-    { label: 'Security', value: 'security' },
-    { label: 'Login', value: 'login' },
-    { label: 'Temporary', value: 'temporary' }
-];
+const tagOptions = computed(() => [
+    { label: t('mail.filters.all_tags'), value: '' },
+    { label: t('mail.tags.2fa'), value: '2fa' },
+    { label: t('mail.tags.password'), value: 'password' },
+    { label: t('mail.tags.registration'), value: 'registration' },
+    { label: t('mail.tags.welcome'), value: 'welcome' },
+    { label: t('mail.tags.reset'), value: 'reset' },
+    { label: t('mail.tags.security'), value: 'security' },
+    { label: t('mail.tags.login'), value: 'login' },
+    { label: t('mail.tags.temporary'), value: 'temporary' }
+]);
 
 interface TemplatesFilterModel {
     package?: string;
@@ -306,35 +308,35 @@ const isSelected = (id: any) => selectedItems.value.includes(String(id));
 const deleteSelectedItems = async () => {
     if (selectedItems.value.length === 0) return;
     const result = await Swal.fire({
-        title: 'Delete Selected Templates?',
-        text: `Are you sure you want to delete ${selectedItems.value.length} template(s)?`,
+        title: t('mail.confirm.delete_selected'),
+        text: t('mail.confirm.delete_selected_text', { count: selectedItems.value.length }),
         icon: 'warning', showCancelButton: true,
-        confirmButtonText: 'Yes, delete!', confirmButtonColor: '#dc2626',
-        cancelButtonText: 'Cancel', padding: '2em',
+        confirmButtonText: t('mail.confirm.yes_delete'), confirmButtonColor: '#dc2626',
+        cancelButtonText: t('mail.confirm.cancel'), padding: '2em',
         customClass: { container: 'sweet-alerts' },
     });
     if (result.isConfirmed) {
         try {
             await Promise.all(selectedItems.value.map(id => templatesStore.deleteTemplate(id)));
-            showToast(`${selectedItems.value.length} template(s) deleted successfully.`, 'success');
+            showToast(t('mail.messages.deleted', { count: selectedItems.value.length }), 'success');
             selectedItems.value = [];
             await refreshData();
         } catch (error) {
-            showToast('Failed to delete some templates.', 'error');
+            showToast(t('mail.messages.delete_failed'), 'error');
         }
     }
 };
 
 // Table columns
-const cols = ref([
+const cols = computed(() => [
     { field: 'checkbox', title: '', sort: false, width: '40px' },
-    { field: 'name', title: 'Name', width: '200px' },
-    { field: 'slug', title: 'Slug', width: '200px' },
-    { field: 'subject', title: 'Subject', width: '250px' },
-    { field: 'tags', title: 'Tags', width: '150px', sort: false },
-    { field: 'is_active', title: 'Status', width: '100px' },
-    { field: 'updated_at', title: 'Updated', width: '150px' },
-    { field: 'actions', title: 'Actions', width: '150px', sort: false },
+    { field: 'name', title: t('mail.table.name'), width: '200px' },
+    { field: 'slug', title: t('mail.table.slug'), width: '200px' },
+    { field: 'subject', title: t('mail.table.subject'), width: '250px' },
+    { field: 'tags', title: t('mail.table.tags'), width: '150px', sort: false },
+    { field: 'is_active', title: t('mail.table.status'), width: '100px' },
+    { field: 'updated_at', title: t('mail.table.updated'), width: '150px' },
+    { field: 'actions', title: t('mail.table.actions'), width: '150px', sort: false },
 ]);
 
 // Build API filters from UI filters
@@ -452,11 +454,11 @@ const duplicateTemplate = async (template: any) => {
         };
         
         await templatesStore.createTemplate(duplicateData);
-        showToast('Template duplicated successfully', 'success');
+        showToast(t('mail.messages.duplicated'), 'success');
         await refreshData();
     } catch (error) {
         console.error('Error duplicating template:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to duplicate template';
+        const errorMessage = error instanceof Error ? error.message : t('mail.messages.duplicate_failed');
         showToast(errorMessage, 'error');
     }
 };
@@ -464,11 +466,11 @@ const duplicateTemplate = async (template: any) => {
 const confirmDelete = async (template: any) => {
     const result = await Swal.fire({
         icon: 'warning',
-        title: 'Delete Template?',
-        text: `Are you sure you want to delete "${template.name}"? This action cannot be undone!`,
+        title: t('mail.confirm.delete'),
+        text: t('mail.confirm.delete_text', { name: template.name }),
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete!',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: t('mail.confirm.yes_delete'),
+        cancelButtonText: t('mail.confirm.cancel'),
         padding: '2em',
         customClass: { container: 'sweet-alerts' },
     });
@@ -476,11 +478,11 @@ const confirmDelete = async (template: any) => {
     if (result.isConfirmed) {
         try {
             await templatesStore.deleteTemplate(template.id);
-            showToast('Template deleted successfully', 'success');
+            showToast(t('mail.messages.deleted_single'), 'success');
             await refreshData();
         } catch (error) {
             console.error('Error deleting template:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to delete template';
+            const errorMessage = error instanceof Error ? error.message : t('mail.messages.delete_single_failed');
             showToast(errorMessage, 'error');
         }
     }
@@ -522,4 +524,6 @@ onMounted(() => {
 }
 </style>
 
-<style src="@/assets/css/select2.css"></style>
+<style>
+@import '@/assets/css/select2.css';
+</style>

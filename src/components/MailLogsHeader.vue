@@ -3,7 +3,7 @@
         <div class="panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h5 class="font-semibold text-lg dark:text-white-light">{{ title }}</h5>
-                <p class="text-white-dark text-sm mt-1">Monitor email delivery status and track sent messages</p>
+                <p class="text-white-dark text-sm mt-1">{{ t('mail.logs.subtitle') }}</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button
@@ -12,7 +12,7 @@
                     @click="showFilters = !showFilters"
                 >
                     <icon-menu class="ltr:mr-2 rtl:ml-2" />
-                    Filters
+                    {{ t('mail.filters.filters') }}
                     <icon-caret-down class="ltr:ml-2 rtl:mr-2" :class="{ 'rotate-180': showFilters }" />
                 </button>
             </div>
@@ -24,11 +24,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Search</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.search') }}</label>
                         <div class="relative">
                             <input
                                 type="text"
-                                placeholder="Search by email, subject..."
+                                :placeholder="t('mail.filters.search_logs')"
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 :value="modelValue.search"
                                 @input="updateFilter('search', ($event.target as HTMLInputElement).value)"
@@ -41,11 +41,11 @@
 
                     <!-- Status Filter -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Status</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.status') }}</label>
                         <CustomSelect
                             :model-value="modelValue.status || ''"
                             :options="statusOptions"
-                            placeholder="All Statuses"
+                            :placeholder="t('mail.filters.all_statuses')"
                             :searchable="false"
                             :allowEmpty="true"
                             @update:model-value="updateFilter('status', $event)"
@@ -54,7 +54,7 @@
 
                     <!-- Date From -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Date From</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.date_from') }}</label>
                         <input
                             type="date"
                             class="form-input"
@@ -65,7 +65,7 @@
 
                     <!-- Date To -->
                     <div>
-                        <label class="text-sm font-semibold mb-2 block">Date To</label>
+                        <label class="text-sm font-semibold mb-2 block">{{ t('mail.filters.date_to') }}</label>
                         <input
                             type="date"
                             class="form-input"
@@ -83,7 +83,7 @@
                         @click="clearFilters"
                     >
                         <icon-refresh class="ltr:mr-2 rtl:ml-2" />
-                        Clear Filters
+                        {{ t('mail.filters.clear_filters') }}
                     </button>
                 </div>
             </div>
@@ -92,8 +92,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import VueCollapsible from 'vue-height-collapsible/vue3';
+import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
 import { IconMenu,  IconCaretDown, IconRefresh, IconSearch, CustomSelect } from '../../../moii-ui/src/index';
 export interface MailLogsFilterModel {
     search?: string;
@@ -115,17 +116,18 @@ const emit = defineEmits<{
     (e: 'update:modelValue', value: MailLogsFilterModel): void;
 }>();
 
+const { t } = useI18n();
 const showFilters = ref(false);
 
 // Status options
-const statusOptions = [
-    { label: 'All Statuses', value: '' },
-    { label: 'Pending', value: 'pending' },
-    { label: 'Sent', value: 'sent' },
-    { label: 'Delivered', value: 'delivered' },
-    { label: 'Failed', value: 'failed' },
-    { label: 'Bounced', value: 'bounced' }
-];
+const statusOptions = computed(() => [
+    { label: t('mail.filters.all_statuses'), value: '' },
+    { label: t('mail.status.pending'), value: 'pending' },
+    { label: t('mail.status.sent'), value: 'sent' },
+    { label: t('mail.status.delivered'), value: 'delivered' },
+    { label: t('mail.status.failed'), value: 'failed' },
+    { label: t('mail.status.bounced'), value: 'bounced' }
+]);
 
 const updateFilter = (key: keyof MailLogsFilterModel, value: string) => {
     const newValue = value === '' ? undefined : value;
