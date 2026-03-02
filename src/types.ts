@@ -1,3 +1,5 @@
+import { makeEnum, type EnumValue } from '../../moii-system/src/utils/enums';
+
 // Mail Template Interfaces
 export interface MailTemplate {
     id: number;
@@ -138,11 +140,46 @@ export interface MailStatistics {
     by_package: Record<string, number>;
 }
 
-// Enums
-export type MailStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
-export type MailPriority = 'low' | 'normal' | 'high' | 'urgent';
-export type MailType = 'transactional' | 'bulk' | 'marketing' | 'system';
-export type TrackingEventType = 'open' | 'click' | 'bounce' | 'unsubscribe' | 'spam';
+// Enums — mirrors of PHP backed enums in api/packages/moii-mail/src/Enums/
+export const MailStatus = makeEnum({
+    PENDING:   'pending',
+    QUEUED:    'queued',
+    SENDING:   'sending',
+    SENT:      'sent',
+    DELIVERED: 'delivered',
+    FAILED:    'failed',
+    BOUNCED:   'bounced',
+    CANCELLED: 'cancelled',
+    SCHEDULED: 'scheduled',
+});
+export type MailStatus = EnumValue<typeof MailStatus>;
+
+export const MailPriority = makeEnum({
+    LOW:    'low',
+    NORMAL: 'normal',
+    HIGH:   'high',
+    URGENT: 'urgent',
+});
+export type MailPriority = EnumValue<typeof MailPriority>;
+
+export const MailType = makeEnum({
+    TRANSACTIONAL: 'transactional',
+    BULK:          'bulk',
+    MARKETING:     'marketing',
+    SYSTEM:        'system',
+});
+export type MailType = EnumValue<typeof MailType>;
+
+export const TrackingEventType = makeEnum({
+    SENT:         'sent',
+    DELIVERED:    'delivered',
+    OPENED:       'opened',
+    CLICKED:      'clicked',
+    BOUNCED:      'bounced',
+    UNSUBSCRIBED: 'unsubscribed',
+    COMPLAINED:   'complained',
+});
+export type TrackingEventType = EnumValue<typeof TrackingEventType>;
 
 // API Response Interfaces
 export interface TemplatesResponse {

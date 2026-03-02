@@ -21,6 +21,7 @@
                                 :placeholder="t('mail.filters.search_logs')"
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 v-model="filters.search"
+                                @input="onSearchInput"
                             />
                             <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
                                 <IconSearch class="mx-auto" />
@@ -37,6 +38,7 @@
                             :placeholder="t('mail.filters.all_statuses')"
                             :searchable="false"
                             :allowEmpty="true"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
 
@@ -47,6 +49,7 @@
                             type="date"
                             class="form-input"
                             v-model="filters.date_from"
+                            @change="onFilterChange"
                         />
                     </div>
 
@@ -57,6 +60,7 @@
                             type="date"
                             class="form-input"
                             v-model="filters.date_to"
+                            @change="onFilterChange"
                         />
                     </div>
                 </div>
@@ -145,9 +149,12 @@
                     :loading="loading"
                     :sortable="true"
                     :pagination="true"
-                    :page="pagination.current_page"
-                    :pageSize="pagination.per_page"
+                    :page="currentPage"
+                    :pageSize="pageSize"
                     :pageSizeOptions="[10, 25, 50, 100]"
+                    :search="''"
+                    :sortColumn="mailStore.sorting.sort_by"
+                    :sortDirection="mailStore.sorting.sort_direction"
                     @change="handleChange"
                     skin="whitespace-nowrap bh-table-hover"
                     firstArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M13 19L7 12L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path opacity="0.5" d="M16.9998 19L10.9998 12L16.9998 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
@@ -237,12 +244,32 @@ interface MailLogsFilterModel {
 
 const filters = ref<MailLogsFilterModel>({});
 
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+const loadData = async () => {
+    const params: Record<string, any> = {
+        page: currentPage.value,
+        per_page: pageSize.value,
+        sort_by: mailStore.sorting.sort_by,
+        sort_direction: mailStore.sorting.sort_direction,
+    };
+    if (filters.value.search) params.search = filters.value.search;
+    if (filters.value.status) params.status = filters.value.status;
+    if (filters.value.date_from) params.date_from = filters.value.date_from;
+    if (filters.value.date_to) params.date_to = filters.value.date_to;
+    await mailStore.fetchMailLogs(params);
+};
+
 const clearFilters = () => {
     filters.value = {};
+    currentPage.value = 1;
+    loadData();
 };
 
 const refreshData = async () => {
-    await mailStore.fetchMailLogs({ page: 1, per_page: pagination.value.per_page });
+    currentPage.value = 1;
+    await loadData();
     await mailStore.getStats();
 };
 
@@ -261,72 +288,45 @@ const cols = computed(() => [
     { field: 'actions', title: t('mail.table.actions'), width: '80px', sort: false },
 ]);
 
-// Build API filters from UI filters
-function buildApiFilters(uiFilters: MailLogsFilterModel, page: number = 1, perPage: number = 10): any {
-    const apiFilters: any = {
-        page,
-        per_page: perPage
-    };
-    
-    if (uiFilters.search) {
-        apiFilters.search = uiFilters.search;
-    }
-    
-    if (uiFilters.status) {
-        apiFilters.status = uiFilters.status;
-    }
-    
-    if (uiFilters.date_from) {
-        apiFilters.date_from = uiFilters.date_from;
-    }
-    
-    if (uiFilters.date_to) {
-        apiFilters.date_to = uiFilters.date_to;
-    }
-    
-    return apiFilters;
-}
-
 // Handle changes from datatable (pagination, sorting, etc.)
 async function handleChange(event: any) {
-    let needsReload = false;
-
-    // Handle sorting
-    if (event.sort_column || event.sort_direction) {
-        const sortBy = event.sort_column || '';
-        const sortDirection = (event.sort_direction || 'asc').toLowerCase() as 'asc' | 'desc';
-        const columnMapping: Record<string, string> = {
-            'to_email': 'to_email',
-            'subject': 'subject',
-            'status': 'status',
-            'priority': 'priority',
-            'created_at': 'created_at',
-        };
-        const backendField = columnMapping[sortBy] || sortBy;
-        mailStore.updateSorting(backendField, sortDirection);
-        needsReload = true;
-    }
-
-    // Handle pagination
-    if (event.current_page || event.pagesize) {
-        needsReload = true;
-    }
-
-    if (needsReload) {
-        const apiFilters = buildApiFilters(filters.value, event.current_page, event.pagesize);
-        await mailStore.fetchMailLogs(apiFilters);
+    if (event.sort_column !== undefined || event.sort_direction !== undefined) {
+        mailStore.updateSorting(
+            event.sort_column || mailStore.sorting.sort_by,
+            ((event.sort_direction || 'asc').toLowerCase()) as 'asc' | 'desc'
+        );
+        currentPage.value = 1;
+        await loadData();
+    } else if (event.pagesize !== undefined && event.pagesize !== pageSize.value) {
+        pageSize.value = event.pagesize ?? event.per_page ?? event.perPage ?? event.pageSize;
+        currentPage.value = 1;
+        await loadData();
+    } else if (event.current_page !== undefined) {
+        currentPage.value = event.current_page ?? event.currentPage ?? event.page;
+        await loadData();
     }
 }
 
-// Watch filters and apply them
-watch(filters, async (newFilters) => {
-    const apiFilters = buildApiFilters(newFilters, 1, pagination.value.per_page);
-    await mailStore.fetchMailLogs(apiFilters);
-}, { deep: true });
+// Debounced search handler
+let searchTimer: ReturnType<typeof setTimeout>;
+const onSearchInput = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        currentPage.value = 1;
+        loadData();
+    }, 300);
+};
+
+// Immediate filter change handler
+const onFilterChange = () => {
+    currentPage.value = 1;
+    loadData();
+};
 
 // Watch for tenant/app context changes and refetch data
 watch([() => contextStore.currentTenantUuid, () => contextStore.currentAppUuid], async () => {
-    await mailStore.fetchMailLogs({ page: 1, per_page: 10 });
+    currentPage.value = 1;
+    await loadData();
     await mailStore.getStats();
 });
 
@@ -354,7 +354,7 @@ const getStatusBadgeClass = (status: string) => {
 };
 
 onMounted(async () => {
-    await mailStore.fetchMailLogs({ page: 1, per_page: 10 });
+    await loadData();
     await mailStore.getStats();
 });
 </script>

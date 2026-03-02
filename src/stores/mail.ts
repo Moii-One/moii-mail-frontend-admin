@@ -2,13 +2,12 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
 import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
+import { parseApiResponse, parsePaginatedResponse, extractErrorMessage } from '../../../moii-system/src/utils/apiResponse';
 import config from '../../config.json';
 import type {
     MailLog,
     MailFilters,
     MailStatistics,
-    MailLogsResponse,
-    MailStatsResponse,
     PaginationData
 } from '../types';
 
@@ -67,53 +66,29 @@ export const useMailStore = defineStore('mail', () => {
     };
 
     // Actions
-    const fetchMailLogs = async (filters?: MailFilters) => {
+    const fetchMailLogs = async (params: Record<string, any> = {}) => {
         loading.value = true;
         error.value = null;
 
         try {
-            const params = new URLSearchParams();
-            if (filters?.search) params.append('search', filters.search);
-            if (filters?.status) params.append('status', filters.status);
-            if (filters?.template_id) params.append('template_id', String(filters.template_id));
-            if (filters?.package) params.append('package', filters.package);
-            if (filters?.date_from) params.append('date_from', filters.date_from);
-            if (filters?.date_to) params.append('date_to', filters.date_to);
-            if (filters?.page) params.append('page', String(filters.page));
-            if (filters?.per_page) params.append('per_page', String(filters.per_page));
+            const queryParams = new URLSearchParams();
+            for (const [key, val] of Object.entries(params)) {
+                if (val !== null && val !== undefined && val !== '') {
+                    queryParams.append(key, String(val));
+                }
+            }
 
-            // Add sorting params
-            params.append('sort_by', sorting.value.sort_by);
-            params.append('sort_direction', sorting.value.sort_direction);
-
-            const queryString = params.toString();
-            const url = `${config.api_url}/logs${queryString ? '?' + queryString : ''}`;
+            const url = `${config.api_url}/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
 
             const response = await fetch(url, {
                 headers: getAuthHeaders()
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            
-            if (result.success && result.data) {
-                mailLogs.value = result.data;
-                // Handle pagination from new format
-                pagination.value = {
-                    current_page: result.current_page || 1,
-                    per_page: result.per_page || 10,
-                    total: result.total || 0,
-                    last_page: result.last_page || 1
-                };
-            } else {
-                throw new Error(result.message || 'Failed to fetch mail logs');
-            }
+            const result = await parsePaginatedResponse<MailLog>(response);
+            mailLogs.value = result.data;
+            pagination.value = result.pagination;
         } catch (err) {
-            error.value = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error fetching mail logs:', err);
+            error.value = extractErrorMessage(err);
         } finally {
             loading.value = false;
         }
@@ -130,21 +105,11 @@ export const useMailStore = defineStore('mail', () => {
                 headers: getAuthHeaders()
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result: MailLogsResponse = await response.json();
-            
-            if (result.success && result.mail) {
-                currentMail.value = result.mail;
-                return result.mail;
-            } else {
-                throw new Error(result.message || 'Failed to fetch mail log');
-            }
+            const result = await parseApiResponse<MailLog>(response);
+            currentMail.value = result.data ?? null;
+            return result.data!;
         } catch (err) {
-            error.value = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error fetching mail log:', err);
+            error.value = extractErrorMessage(err);
             throw err;
         } finally {
             loading.value = false;
@@ -169,21 +134,11 @@ export const useMailStore = defineStore('mail', () => {
                 headers: getAuthHeaders()
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result: MailStatsResponse = await response.json();
-            
-            if (result.success && result.data) {
-                stats.value = result.data;
-                return result.data;
-            } else {
-                throw new Error(result.message || 'Failed to fetch statistics');
-            }
+            const result = await parseApiResponse<MailStatistics>(response);
+            stats.value = result.data ?? null;
+            return result.data;
         } catch (err) {
-            error.value = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error fetching stats:', err);
+            error.value = extractErrorMessage(err);
         } finally {
             loading.value = false;
         }
@@ -201,22 +156,12 @@ export const useMailStore = defineStore('mail', () => {
                 headers: getAuthHeaders()
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            
-            if (result.success) {
-                // Refresh the mail log
-                await getMailLog(id);
-                return true;
-            } else {
-                throw new Error(result.message || 'Failed to retry email');
-            }
+            await parseApiResponse(response);
+            // Refresh the mail log
+            await getMailLog(id);
+            return true;
         } catch (err) {
-            error.value = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error retrying email:', err);
+            error.value = extractErrorMessage(err);
             throw err;
         } finally {
             loading.value = false;

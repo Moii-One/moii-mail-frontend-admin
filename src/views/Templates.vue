@@ -30,6 +30,7 @@
                                 :placeholder="t('mail.filters.search_templates')"
                                 class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                                 v-model="filters.search"
+                                @input="onSearchInput"
                             />
                             <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
                                 <IconSearch class="mx-auto" />
@@ -46,6 +47,7 @@
                             :placeholder="t('mail.filters.all_packages')"
                             :searchable="false"
                             :allowEmpty="true"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
 
@@ -58,6 +60,7 @@
                             :placeholder="t('mail.filters.all_statuses')"
                             :searchable="false"
                             :allowEmpty="true"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
 
@@ -70,6 +73,7 @@
                             :placeholder="t('mail.filters.all_tags')"
                             :searchable="true"
                             :allowEmpty="true"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
                 </div>
@@ -89,9 +93,12 @@
                     :loading="loading"
                     :sortable="true"
                     :pagination="true"
-                    :page="pagination.current_page"
-                    :pageSize="pagination.per_page"
+                    :page="currentPage"
+                    :pageSize="pageSize"
                     :pageSizeOptions="[10, 25, 50, 100]"
+                    :search="''"
+                    :sortColumn="templatesStore.sorting.sort_by"
+                    :sortDirection="templatesStore.sorting.sort_direction"
                     @change="handleChange"
                     skin="whitespace-nowrap bh-table-hover"
                     firstArrow='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 rtl:rotate-180"> <path d="M13 19L7 12L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path opacity="0.5" d="M16.9998 19L10.9998 12L16.9998 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
@@ -105,7 +112,8 @@
                             <div class="h-5 w-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer checkbox-custom"
                                 :class="isSelected(data.value.id) ? 'checked' : ''"
                                 role="checkbox" :aria-checked="isSelected(data.value.id)"
-                                @click="toggleSelection(data.value.id)">
+                                @click="toggleSelection(data.value.id, $event)"
+                            >
                                 <svg v-show="isSelected(data.value.id)" class="h-3 w-3 checkmark-icon" viewBox="0 0 16 16" fill="currentColor">
                                     <path d="M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z"/>
                                 </svg>
@@ -219,6 +227,7 @@ import { useContextStore } from '../../../../packages/moii-users/src/stores/cont
 import { usePermissions } from '../../../../src/composables/usePermissions';
 import { useToast } from '../../../moii-ui/src/index';
 import { useI18n } from '../../../moii-localizations/src/composables/useI18n';
+import { useShiftClickSelection } from '../../../../src/composables/useShiftClickSelection';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import TemplatePreviewModal from '../components/TemplatePreviewModal.vue';
 import type { MailTemplate } from '../types';
@@ -273,13 +282,35 @@ interface TemplatesFilterModel {
 
 const filters = ref<TemplatesFilterModel>({});
 
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+const loadData = async () => {
+    const params: Record<string, any> = {
+        page: currentPage.value,
+        per_page: pageSize.value,
+        sort_by: templatesStore.sorting.sort_by,
+        sort_direction: templatesStore.sorting.sort_direction,
+    };
+    if (filters.value.search) params.search = filters.value.search;
+    // Build tags array from package and tag filters
+    const tags: string[] = [];
+    if (filters.value.package) tags.push(filters.value.package);
+    if (filters.value.tag) tags.push(filters.value.tag);
+    if (tags.length > 0) params.tags = tags;
+    if (filters.value.status) params.active = filters.value.status === 'active' ? 1 : 0;
+    await templatesStore.fetchTemplates(params);
+};
+
 const clearFilters = () => {
     filters.value = {};
+    currentPage.value = 1;
+    loadData();
 };
 
 const refreshData = async () => {
-    const apiFilters = buildApiFilters(filters.value, 1, pagination.value.per_page);
-    await templatesStore.fetchTemplates(apiFilters);
+    currentPage.value = 1;
+    await loadData();
 };
 const showPreviewModal = ref(false);
 const selectedTemplate = ref<MailTemplate | null>(null);
@@ -288,25 +319,15 @@ const templates = computed(() => templatesStore.templates);
 const loading = computed(() => templatesStore.loading);
 const pagination = computed(() => templatesStore.pagination);
 
-// Bulk selection state
-const selectedItems = ref<string[]>([]);
-const isAllSelected = computed(() => {
-    if (templatesStore.templates.length === 0) return false;
-    return selectedItems.value.length === templatesStore.templates.length;
-});
-
-// Bulk selection functions
-const toggleSelectAll = () => {
-    if (isAllSelected.value) { selectedItems.value = []; }
-    else { selectedItems.value = templatesStore.templates.map((item: any) => String(item.id)); }
-};
-const toggleSelection = (id: any) => {
-    const strId = String(id);
-    const index = selectedItems.value.indexOf(strId);
-    if (index > -1) { selectedItems.value.splice(index, 1); }
-    else { selectedItems.value.push(strId); }
-};
-const isSelected = (id: any) => selectedItems.value.includes(String(id));
+// Bulk selection state with shift-click support
+const { 
+    selectedIds: selectedItems, 
+    toggleSelection, 
+    toggleSelectAll, 
+    isSelected, 
+    isAllSelected,
+    clearSelection 
+} = useShiftClickSelection(computed(() => templatesStore.templates), (template: any) => String(template.id));
 
 const deleteSelectedItems = async () => {
     if (selectedItems.value.length === 0) return;
@@ -322,7 +343,7 @@ const deleteSelectedItems = async () => {
         try {
             await Promise.all(selectedItems.value.map(id => templatesStore.deleteTemplate(id)));
             showToast(t('mail.messages.deleted', { count: selectedItems.value.length }), 'success');
-            selectedItems.value = [];
+            clearSelection();
             await refreshData();
         } catch (error) {
             showToast(t('mail.messages.delete_failed'), 'error');
@@ -342,78 +363,46 @@ const cols = computed(() => [
     { field: 'actions', title: t('mail.table.actions'), width: '150px', sort: false },
 ]);
 
-// Build API filters from UI filters
-function buildApiFilters(uiFilters: TemplatesFilterModel, page: number = 1, perPage: number = 10): any {
-    const apiFilters: any = {
-        page,
-        per_page: perPage
-    };
-    
-    if (uiFilters.search) {
-        apiFilters.search = uiFilters.search;
-    }
-    
-    // Build tags array from package and tag filters
-    const tags: string[] = [];
-    if (uiFilters.package) {
-        tags.push(uiFilters.package);
-    }
-    if (uiFilters.tag) {
-        tags.push(uiFilters.tag);
-    }
-    if (tags.length > 0) {
-        apiFilters.tags = tags;
-    }
-    
-    if (uiFilters.status) {
-        apiFilters.active = uiFilters.status === 'active' ? 1 : 0;
-    }
-    
-    return apiFilters;
-}
-
 // Handle changes from datatable (pagination, sorting, etc.)
 async function handleChange(event: any) {
-    let needsReload = false;
-
-    // Handle sorting
-    if (event.sort_column || event.sort_direction) {
-        const sortBy = event.sort_column || '';
-        const sortDirection = (event.sort_direction || 'asc').toLowerCase() as 'asc' | 'desc';
-        const columnMapping: Record<string, string> = {
-            'name': 'name',
-            'slug': 'slug',
-            'subject': 'subject',
-            'is_active': 'is_active',
-            'updated_at': 'updated_at',
-        };
-        const backendField = columnMapping[sortBy] || sortBy;
-        templatesStore.updateSorting(backendField, sortDirection);
-        needsReload = true;
-    }
-
-    // Handle pagination
-    if (event.current_page || event.pagesize) {
-        needsReload = true;
-    }
-
-    if (needsReload) {
-        const apiFilters = buildApiFilters(filters.value, event.current_page, event.pagesize);
-        await templatesStore.fetchTemplates(apiFilters);
+    if (event.sort_column !== undefined || event.sort_direction !== undefined) {
+        templatesStore.updateSorting(
+            event.sort_column || templatesStore.sorting.sort_by,
+            ((event.sort_direction || 'asc').toLowerCase()) as 'asc' | 'desc'
+        );
+        currentPage.value = 1;
+        await loadData();
+    } else if (event.pagesize !== undefined && event.pagesize !== pageSize.value) {
+        pageSize.value = event.pagesize ?? event.per_page ?? event.perPage ?? event.pageSize;
+        currentPage.value = 1;
+        await loadData();
+    } else if (event.current_page !== undefined) {
+        currentPage.value = event.current_page ?? event.currentPage ?? event.page;
+        await loadData();
     }
 }
 
-// Watch filters and apply them
-watch(filters, async (newFilters) => {
-    const apiFilters = buildApiFilters(newFilters, 1, pagination.value.per_page);
-    await templatesStore.fetchTemplates(apiFilters);
-}, { deep: true });
+// Debounced search handler
+let searchTimer: ReturnType<typeof setTimeout>;
+const onSearchInput = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        currentPage.value = 1;
+        loadData();
+    }, 300);
+};
+
+// Immediate filter change handler
+const onFilterChange = () => {
+    currentPage.value = 1;
+    loadData();
+};
 
 // Watch for tenant/app context changes and refetch data
 watch([() => contextStore.currentTenantUuid, () => contextStore.currentAppUuid], async () => {
-    selectedItems.value = [];
-    const apiFilters = buildApiFilters(filters.value, 1, pagination.value.per_page);
-    await templatesStore.fetchTemplates(apiFilters);
+    clearSelection();
+    currentPage.value = 1;
+    await loadData();
 });
 
 const formatDate = (dateString: string) => {
@@ -492,7 +481,7 @@ const confirmDelete = async (template: any) => {
 };
 
 onMounted(() => {
-    templatesStore.fetchTemplates({ page: 1, per_page: 10 });
+    loadData();
 });
 </script>
 
