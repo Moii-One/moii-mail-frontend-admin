@@ -3,7 +3,8 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../moii-auth/src/stores/auth';
 import { getAuthHeaders as sharedGetAuthHeaders } from '../../../moii-auth/src/utils/http';
 import { parseApiResponse, parsePaginatedResponse, extractErrorMessage } from '../../../moii-system/src/utils/apiResponse';
-import config from '../../config.json';
+import _config from '../../config.json';
+import { getPackageConfig } from '../../../moii-system/src/utils/packageConfig';
 import type {
     MailTemplate,
     CreateTemplateData,
@@ -15,6 +16,7 @@ import type {
 } from '../types';
 
 export const useTemplatesStore = defineStore('mailTemplates', () => {
+    const config = getPackageConfig('moii-mail', _config);
     const authStore = useAuthStore();
     
     // State
