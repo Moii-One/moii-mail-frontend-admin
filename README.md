@@ -2,7 +2,7 @@
 
 > Email template management and mail logs monitoring for moii platform
 
-**Version:** v0.0.11 | **Part of:** [MOII Platform](https://github.com/Moii-One)
+**Version:** v0.0.12 | **Part of:** [MOII Platform](https://github.com/Moii-One)
 
 ---
 
