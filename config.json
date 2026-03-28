@@ -1,6 +1,8 @@
 {
-  "name": "moii-mail",
-  "version": "1.0.0",
-  "description": "Email template management and mail logs monitoring for moii platform",
-  "api_url": "http://localhost:8000/api/mail"
+    "name": "moii-mail",
+    "version": "0.0.8",
+    "description": "Email template management and mail delivery log monitoring for Moii.One",
+    "readme": "https://github.com/Moii-One/moii-mail-frontend-admin/blob/main/README.md",
+    "changelog": "https://github.com/Moii-One/moii-mail-frontend-admin/blob/main/CHANGELOG.md",
+    "api_url": "http://localhost:8000/api/mail"
 }

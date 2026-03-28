@@ -59,7 +59,7 @@
                             type="text"
                             class="form-input"
                             :placeholder="t('mail.form.template_name_placeholder')"
-                            required
+                            required v-t-validate
                         />
                     </div>
 
@@ -72,7 +72,7 @@
                             type="text"
                             class="form-input"
                             :placeholder="t('mail.form.slug_placeholder')"
-                            required
+                            required v-t-validate
                         />
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                         type="text"
                         class="form-input"
                         :placeholder="t('mail.form.email_subject_placeholder')"
-                        required
+                        required v-t-validate
                     />
                 </div>
 
